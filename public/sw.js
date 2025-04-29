@@ -9,7 +9,6 @@ this.addEventListener('install', (event) => {
         '/',
         '/manifest.json', // manifest bhi cache me daal de
         '/icon.png',
-        '/icon.png'
       ]);
     })
   );
