@@ -1,35 +1,96 @@
-let cacheData = 'appV1';
+// Updated Service Worker for both local and Netlify environments
+const CACHE_NAME = 'taskmaster-v1';
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.png',
+  './user',
+  './todo'
+];
 
-this.addEventListener('install', (event) => {
+// Install event - Cache important files
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(cacheData).then((cache) => {
-      return cache.addAll([
-        '/user',
-        '/todo',
-        '/',
-        '/manifest.json', // manifest bhi cache me daal de
-        '/icon.png',
-      ]);
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('Cache opened');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+      .catch(error => {
+        console.error('Cache installation failed:', error);
+      })
   );
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
 });
 
-this.addEventListener('fetch', (event) => {
-  if (!navigator.onLine) {
-    event.respondWith(
-      caches.match(event.request).then((resp) => {
-        if (resp) {
-          return resp;
+// Activate event - Clean up old caches
+self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            // Delete old caches
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  // Ensure the service worker takes control of all clients immediately
+  self.clients.claim();
+});
+
+// Fetch event - Serve from cache first, then network
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        // Cache hit - return the response from the cached version
+        if (response) {
+          return response;
         }
-        // agar cache me nahi mila to network se laakar return karo
-        let requestUrl = event.request.clone();
-        return fetch(requestUrl).catch(() => {
-          return new Response("Network error occurred", {
-            status: 404,
-            headers: { 'Content-Type': 'text/plain' }
+        
+        // Not in cache - return the result from the live server
+        // Clone the request as it's a one-time use stream
+        const fetchRequest = event.request.clone();
+        
+        return fetch(fetchRequest)
+          .then((response) => {
+            // Check if we received a valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            
+            // Clone the response as it's a one-time use stream
+            const responseToCache = response.clone();
+            
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+              
+            return response;
+          })
+          .catch(() => {
+            // If fetch fails (e.g., offline), try to return a fallback
+            if (event.request.url.indexOf('/user') !== -1) {
+              return caches.match('./user');
+            }
+            
+            if (event.request.url.indexOf('/todo') !== -1) {
+              return caches.match('./todo');
+            }
+            
+            // Return a basic offline page as fallback for other requests
+            return new Response("You are currently offline. Please check your connection.", {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain' }
+            });
           });
-        });
       })
-    );
-  }
+  );
 });

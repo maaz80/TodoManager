@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { ThemeContext } from "../App";
 
-function TodoAuth() {
+function TodoLogin() {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
@@ -332,4 +332,4 @@ function TodoAuth() {
   );
 }
 
-export default TodoAuth;
+export default TodoLogin;
