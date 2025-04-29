@@ -8,8 +8,8 @@ this.addEventListener('install', (event) => {
         '/todo',
         '/',
         '/manifest.json', // manifest bhi cache me daal de
-        '/icon-192.png',
-        '/icon-512.png'
+        '/icon.png',
+        '/icon.png'
       ]);
     })
   );
