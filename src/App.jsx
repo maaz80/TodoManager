@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import Todo from './pages/Todo'
 import Navbar from './components/Navbar'
 import TodoLogin from './pages/TodoLogin'
-import InstallPrompt from './components/InstallPrompt' // Import the new component
+import InstallPrompt from './components/InstallPrompt' 
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 

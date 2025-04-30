@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 const Todo = () => {
   const [tasks, setTasks] = useState([])
   const [userId, setUserId] = useState(null)
+  const [userName, setUserName] = useState("") // State to store the user's name
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [showForm, setShowForm] = useState(false)
@@ -21,6 +22,7 @@ const Todo = () => {
   const closeTaskModal = () => {
     setTaskModal({ isOpen: false, task: null });
   };
+
   // Use theme
   const { theme } = useContext(ThemeContext);
 
@@ -28,12 +30,35 @@ const Todo = () => {
     mode: 'onChange'
   })
 
-  // Get current logged-in user
+  // Get current logged-in user and fetch name
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) setUserId(user.id)
-      setLoading(false)
+      if (user) {
+        setUserId(user.id);
+
+        // Fetch user's name
+        const storedName = localStorage.getItem('userName');
+        if (storedName) {
+          setUserName(storedName);
+        } else {
+          try {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('name')
+              .eq('user_id', user.id)
+              .single();
+
+            if (userData && userData.name) {
+              setUserName(userData.name);
+              localStorage.setItem('userName', userData.name);
+            }
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+          }
+        }
+      }
+      setLoading(false);
     }
     getUser()
   }, [])
@@ -168,7 +193,7 @@ const Todo = () => {
       {/* Header */}
       <header className={`flex items-center justify-between mb-4 lg:mb-8 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         <div>
-          <h1 className="text-3xl font-bold">TaskMaster</h1>
+          <h1 className="text-3xl font-bold">{userName || "TaskMaster"}</h1> {/* Display user's name or fallback to "TaskMaster" */}
           <p className="text-sm opacity-70">Organize your day with style</p>
         </div>
 
@@ -191,7 +216,8 @@ const Todo = () => {
               <span className="absolute -bottom-3.5 left-4 text-[10px] text-red-500">Login to add tasks</span>
             )}
           </div>
-        </div>      </header>
+        </div>
+      </header>
 
       {/* Add Task Form */}
       {showForm && (

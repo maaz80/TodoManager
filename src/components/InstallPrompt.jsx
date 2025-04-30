@@ -72,7 +72,7 @@ const InstallPrompt = () => {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-2xl bg-opacity-50">
       <div className={`rounded-lg p-6 shadow-xl max-w-md w-full mx-4 ${
         theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
       }`}>

@@ -124,11 +124,11 @@ const Navbar = () => {
             {session ? (
               <div className="flex items-center space-x-4">
                 {/* User Name Display */}
-                {userName && (
+                {/* {userName && (
                   <div className={`font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                     Hi, {userName}
                   </div>
-                )}
+                )} */}
                 
                 <button 
                   onClick={handleLogout}
@@ -194,11 +194,11 @@ const Navbar = () => {
         <div className={`md:hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {/* User Name Display for Mobile */}
-            {session && userName && (
+            {/* {session && userName && (
               <div className={`px-3 py-2 font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                  {userName}
               </div>
-            )}
+            )} */}
             
             <Link
               to="/"
