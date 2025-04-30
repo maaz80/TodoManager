@@ -437,6 +437,10 @@ function TodoLogin() {
                   value: /^[0-9]{6}$/,
                   message: "Invalid OTP format",
                 },
+                minLength:{
+                  value: 6,
+                  message: "OTP must be 6 digits",
+                },
                 validate: (value) => value.trim() !== "" || "OTP cannot be empty or spaces only",
               })}
               className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${
