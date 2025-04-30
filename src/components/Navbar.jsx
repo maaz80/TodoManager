@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { supabase } from "../supabase-client";
 import { ThemeContext } from "../App";
 import { toast } from "react-toastify";
@@ -8,7 +8,6 @@ const Navbar = () => {
   const [session, setSession] = useState(null);
   const [userName, setUserName] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
   
   // Use our contexts
@@ -60,7 +59,6 @@ const Navbar = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       
-      // Reset username if logged out
       if (!session) {
         setUserName("");
       } else {

@@ -152,6 +152,7 @@ const Todo = () => {
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
+
   // Filter tasks based on active tab
   const getFilteredTasks = () => {
     switch (activeTab) {

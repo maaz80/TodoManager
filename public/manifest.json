@@ -1,6 +1,6 @@
 {
   "short_name": "TaskMaster",
-  "name": "TaskMaster App",
+  "name": "TaskMaster",
   "description": "A simple task management application",
   "start_url": "./",
   "scope": "./",
