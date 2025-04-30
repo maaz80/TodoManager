@@ -209,8 +209,8 @@ const Todo = () => {
       {/* Header */}
       <header className={`flex items-center justify-between mb-4 lg:mb-8 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         <div>
-          <h1 className="text-3xl font-bold">{userName || "TaskMaster"}</h1> {/* Display user's name or fallback to "TaskMaster" */}
-          <p className="text-sm opacity-70">Organize your day with style</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{userName || "TaskMaster"}</h1> {/* Display user's name or fallback to "TaskMaster" */}
+          <p className="text-xs md:text-sm opacity-70">Organize your day with style</p>
         </div>
 
         <div className='-mt-3'>
@@ -218,7 +218,7 @@ const Todo = () => {
             <button
               onClick={() => setShowForm(!showForm)}
               disabled={!userId}
-              className={`flex items-center px-4 py-2 rounded-full font-medium transition-all 
+              className={`flex items-center px-3 md:px-4 py-1 md:py-2 rounded-full font-medium transition-all 
               ${!userId
                   ? 'bg-gray-300 cursor-not-allowed'
                   : showForm
@@ -391,22 +391,24 @@ const Todo = () => {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex justify-end mt-4 space-x-2">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={` ${currentPage === 1 ? 'bg-gray-100 text-gray-300' : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg text-white'} px-4 py-2  rounded `}
-        >
-          Previous
-        </button>
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={!hasMoreTasks}
-          className={`px-4 py-2 ${hasMoreTasks ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg text-white' : 'bg-gray-100 text-gray-300'  }  rounded`}
-        >
-          Next
-        </button>
-      </div>
+      {userId &&
+        <div className="flex justify-end mt-4 space-x-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={` ${currentPage === 1 ? 'bg-gray-100 text-gray-300' : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg text-white'} px-4 py-2  rounded `}
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={!hasMoreTasks}
+            className={`px-4 py-2 ${hasMoreTasks ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg text-white' : 'bg-gray-100 text-gray-300'}  rounded`}
+          >
+            Next
+          </button>
+        </div>
+      }
 
 
       {/* Task Modal */}
