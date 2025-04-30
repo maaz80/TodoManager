@@ -525,7 +525,7 @@ const Todo = () => {
               </button>
             </div>
 
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-col md:flex-row item-start md:items-center justify-between'>
               <div>
                 <div className="mb-4">
                   <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Due date:</span>
@@ -540,13 +540,13 @@ const Todo = () => {
 
               {/* Image  */}
               {taskModal.task.image_url && (
-                <div className='w-[50%] rounded-md overflow-hidden' onClick={() => setOpenImage(true)}>
+                <div className='w-full md:w-[50%] rounded-md overflow-hidden' onClick={() => setOpenImage(true)}>
                   <img src={taskModal.task.image_url} alt="Uploaded Image" className='w-full max-h-[160px]  rounded-md object-cover' />
                 </div>
               )}
             </div>
 
-            <div className='w-[90%]'>
+            <div className='w-[90%] mt-4 md:mt-0'>
               <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Description:</span>
               <p className="font-normal md:font-medium text-sm md:text-lg mt-1 break-words whitespace-pre-wrap">{taskModal.task.description}</p>
             </div>
