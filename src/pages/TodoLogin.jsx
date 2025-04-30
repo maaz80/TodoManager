@@ -1,26 +1,66 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { supabase } from "../supabase-client";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { ThemeContext } from "../App";
 
 function TodoLogin() {
-  const [phone, setPhone] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91"); // Default to India
   const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
   const [session, setSession] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
   const [otpSent, setOtpSent] = useState(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
 
+  // Country codes list
+  const countryCodes = [
+    { code: "+1", country: "US/Canada" },
+    { code: "+44", country: "UK" },
+    { code: "+91", country: "India" },
+    { code: "+61", country: "Australia" },
+    { code: "+49", country: "Germany" },
+    { code: "+33", country: "France" },
+    { code: "+86", country: "China" },
+    { code: "+81", country: "Japan" },
+    { code: "+7", country: "Russia" },
+    { code: "+55", country: "Brazil" },
+    { code: "+27", country: "South Africa" },
+    { code: "+971", country: "UAE" },
+    { code: "+65", country: "Singapore" },
+    { code: "+82", country: "South Korea" },
+  ];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showCountryDropdown && !event.target.closest('.country-dropdown-container')) {
+        setShowCountryDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCountryDropdown]);
+
+  // Get full phone with country code
+  const getFullPhone = () => {
+    return selectedCountryCode + phoneNumber;
+  };
+
   // OTP sending
   const sendOtp = async () => {
-
-    if (!phone) {
+    if (!phoneNumber) {
       toast.error("Please enter a phone number!");
       return;
     }
+
+    const fullPhone = getFullPhone();
 
     try {
       // For signup, also check name field
@@ -36,7 +76,7 @@ function TodoLogin() {
           const { data, error } = await supabase
             .from('users')
             .select('phone')
-            .eq('phone', phone)
+            .eq('phone', fullPhone)
             .single();
           
           if (!error && data) {
@@ -51,7 +91,7 @@ function TodoLogin() {
           const { data, error } = await supabase
             .from('users')
             .select('phone')
-            .eq('phone', phone)
+            .eq('phone', fullPhone)
             .single();
           
           if (error || !data) {
@@ -66,7 +106,7 @@ function TodoLogin() {
 
       // Send OTP
       const { error } = await supabase.auth.signInWithOtp({
-        phone: phone,
+        phone: fullPhone,
       });
 
       if (error) {
@@ -89,9 +129,11 @@ function TodoLogin() {
       return;
     }
 
+    const fullPhone = getFullPhone();
+
     try {
       const { data, error } = await supabase.auth.verifyOtp({
-        phone: phone,
+        phone: fullPhone,
         token: otp,
         type: "sms",
       });
@@ -134,7 +176,7 @@ function TodoLogin() {
             const { error: insertError } = await supabase
               .from('users')
               .insert([{ 
-                phone: phone, 
+                phone: fullPhone, 
                 name: name,
                 user_id: data.user.id
               }]);
@@ -148,7 +190,7 @@ function TodoLogin() {
           
           // Store user info in localStorage
           localStorage.setItem('userName', name);
-          localStorage.setItem('userPhone', phone);
+          localStorage.setItem('userPhone', fullPhone);
         }
 
         // Fetch user name if login
@@ -156,7 +198,7 @@ function TodoLogin() {
           const { data: userData, error: userFetchError } = await supabase
             .from('users')
             .select('name')
-            .eq('phone', phone)
+            .eq('phone', fullPhone)
             .single();
             
           if (userFetchError) {
@@ -167,14 +209,15 @@ function TodoLogin() {
           if (userData) {
             // Store user info in localStorage or context
             localStorage.setItem('userName', userData.name);
-            localStorage.setItem('userPhone', phone);
+            localStorage.setItem('userPhone', fullPhone);
           }
         }
 
         toast.success(isLogin ? "Login successful!" : "Signup successful!");
         setSession(data.session);
         navigate("/");
-   } } catch (error) {
+      }
+    } catch (error) {
       console.error("Authentication error: ", error);
       toast.error("Authentication failed!");
     }
@@ -242,17 +285,69 @@ function TodoLogin() {
             </button>
           </div>
 
-          {/* Phone number input */}
-          <input
-            type="tel"
-            placeholder="+91XXXXXXXXXX"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${
-              theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-700'
-            }`}
-            disabled={otpSent}
-          />
+          {/* Phone number input with country code dropdown */}
+          <div className="flex">
+            <div className="relative country-dropdown-container">
+              <button
+                type="button"
+                onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                disabled={otpSent}
+                className={`flex items-center justify-center  p-3 rounded-l-lg border border-gray-300 ${
+                  theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
+                } ${otpSent ? 'opacity-70' : ''}`}
+              >
+                <span className="font-medium">{selectedCountryCode}</span>
+                <svg
+                  className={`w-4 h-4 ml-1 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Country code dropdown */}
+              {showCountryDropdown && (
+                <div 
+                  className={`absolute z-10 w-48 mt-1 overflow-auto ${
+                    theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'
+                  } rounded-md shadow-lg max-h-60 border border-gray-300`}
+                >
+                  <ul className="py-1">
+                    {countryCodes.map((country) => (
+                      <li key={country.code}>
+                        <button
+                          type="button"
+                          className={`w-full text-left px-4 py-2 hover:${
+                            theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                          } ${selectedCountryCode === country.code ? 
+                            theme === 'dark' ? 'bg-blue-900' : 'bg-blue-100' : ''}`}
+                          onClick={() => {
+                            setSelectedCountryCode(country.code);
+                            setShowCountryDropdown(false);
+                          }}
+                        >
+                          <span className="font-medium">{country.code}</span> {country.country}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <input
+              type="tel"
+              placeholder="Phone Number"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              disabled={otpSent}
+              className={`w-full border border-gray-300 rounded-r-lg p-3  outline-none ${
+                theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-700'
+              }`}
+            />
+          </div>
 
           {/* Name input (only for signup) */}
           {!isLogin && (
@@ -261,7 +356,7 @@ function TodoLogin() {
               placeholder="Enter your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${
+              className={`w-full border border-gray-300 rounded-lg p-3 outline-none ${
                 theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-700'
               }`}
               disabled={otpSent}

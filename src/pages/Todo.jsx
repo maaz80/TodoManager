@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom'
 const Todo = () => {
   const [tasks, setTasks] = useState([])
   const [userId, setUserId] = useState(null)
-  const [userName, setUserName] = useState("") // State to store the user's name
+  const [userName, setUserName] = useState("") 
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [showForm, setShowForm] = useState(false)
