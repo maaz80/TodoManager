@@ -3,18 +3,37 @@ import { supabase } from "../supabase-client";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { ThemeContext } from "../App";
+import { useForm } from "react-hook-form";
 
 function TodoLogin() {
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [selectedCountryCode, setSelectedCountryCode] = useState("+91"); // Default to India
-  const [name, setName] = useState("");
-  const [otp, setOtp] = useState("");
-  const [session, setSession] = useState(null);
-  const [isLogin, setIsLogin] = useState(true);
   const [otpSent, setOtpSent] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91"); // Default to India
+  
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
+  
+  // React Hook Form
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isValid },
+  } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      phoneNumber: "",
+      name: "",
+      otp: "",
+    }
+  });
+
+  // Watch values from form
+  const phoneNumber = watch("phoneNumber");
+  const name = watch("name");
+  const otp = watch("otp");
 
   // Country codes list
   const countryCodes = [
@@ -54,17 +73,17 @@ function TodoLogin() {
   };
 
   // OTP sending
-  const sendOtp = async () => {
-    if (!phoneNumber) {
+  const onSubmitOtp = async (formData) => {
+    if (!formData.phoneNumber) {
       toast.error("Please enter a phone number!");
       return;
     }
 
-    const fullPhone = getFullPhone();
+    const fullPhone = selectedCountryCode + formData.phoneNumber;
 
     try {
       // For signup, also check name field
-      if (!isLogin && !name) {
+      if (!isLogin && !formData.name) {
         toast.error("Please enter your name!");
         return;
       }
@@ -78,14 +97,14 @@ function TodoLogin() {
             .select('phone')
             .eq('phone', fullPhone)
             .single();
-          
+
           if (!error && data) {
             toast.info("Number already registered! Please login instead.");
             setIsLogin(true);
             return;
           }
         }
-        
+
         // For login, check if user exists
         if (isLogin) {
           const { data, error } = await supabase
@@ -123,7 +142,9 @@ function TodoLogin() {
   };
 
   // OTP verify
-  const verifyOtp = async () => {
+  const verifyOtp = async (e) => {
+    e.preventDefault();
+    
     if (!otp) {
       toast.error("Please enter the OTP!");
       return;
@@ -143,7 +164,7 @@ function TodoLogin() {
         toast.error("Invalid OTP! Please try again.");
       } else {
         console.log("Authentication successful:", data);
-        
+
         // If signup, create or update user in users table
         if (!isLogin) {
           // First check if user already exists in our custom table
@@ -152,20 +173,20 @@ function TodoLogin() {
             .select('*')
             .eq('user_id', data.user.id)
             .single();
-            
+
           if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found" which is expected
             console.error("Error checking existing user: ", fetchError);
             toast.error("Error creating account!");
             return;
           }
-          
+
           // If user exists, update their name
           if (existingUser) {
             const { error: updateError } = await supabase
               .from('users')
               .update({ name: name })
               .eq('user_id', data.user.id);
-              
+
             if (updateError) {
               console.error("Error updating user: ", updateError);
               toast.error("Error updating account!");
@@ -175,19 +196,19 @@ function TodoLogin() {
             // Otherwise create new user
             const { error: insertError } = await supabase
               .from('users')
-              .insert([{ 
-                phone: fullPhone, 
+              .insert([{
+                phone: fullPhone,
                 name: name,
                 user_id: data.user.id
               }]);
-              
+
             if (insertError) {
               console.error("Error creating user: ", insertError);
               toast.error("Error creating account! Please make sure you have set up the users table in Supabase.");
               return;
             }
           }
-          
+
           // Store user info in localStorage
           localStorage.setItem('userName', name);
           localStorage.setItem('userPhone', fullPhone);
@@ -200,12 +221,12 @@ function TodoLogin() {
             .select('name')
             .eq('phone', fullPhone)
             .single();
-            
+
           if (userFetchError) {
             console.error("Error fetching user data: ", userFetchError);
             // Continue anyway since authentication succeeded
           }
-            
+
           if (userData) {
             // Store user info in localStorage or context
             localStorage.setItem('userName', userData.name);
@@ -214,7 +235,6 @@ function TodoLogin() {
         }
 
         toast.success(isLogin ? "Login successful!" : "Signup successful!");
-        setSession(data.session);
         navigate("/");
       }
     } catch (error) {
@@ -226,7 +246,11 @@ function TodoLogin() {
   // Reset form state
   const resetForm = () => {
     setOtpSent(false);
-    setOtp("");
+    reset({
+      phoneNumber: "",
+      name: "",
+      otp: ""
+    });
   };
 
   // Toggle between login and signup
@@ -246,176 +270,217 @@ function TodoLogin() {
           {isLogin ? "Login with your phone number" : "Create a new account"}
         </p>
 
-        <div className="space-y-4">
-          {/* Toggle buttons for Login/Signup */}
-          <div className="flex rounded-lg overflow-hidden border border-gray-300">
-            <button
-              onClick={() => {
-                setIsLogin(true);
-                resetForm();
-              }}
-              className={`w-1/2 py-2 font-medium transition-all ${
-                isLogin
-                  ? theme === 'dark'
-                    ? 'bg-blue-700 text-white'
-                    : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                  : theme === 'dark'
+        {/* Toggle buttons for Login/Signup */}
+        <div className="flex rounded-lg overflow-hidden border border-gray-300">
+          <button
+            type="button"
+            onClick={() => {
+              setIsLogin(true);
+              resetForm();
+            }}
+            className={`w-1/2 py-2 font-medium transition-all ${isLogin
+                ? theme === 'dark'
+                  ? 'bg-blue-700 text-white'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                : theme === 'dark'
                   ? 'bg-gray-700 text-gray-300'
                   : 'bg-gray-100 text-gray-600'
               }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => {
-                setIsLogin(false);
-                resetForm();
-              }}
-              className={`w-1/2 py-2 font-medium transition-all ${
-                !isLogin
-                  ? theme === 'dark'
-                    ? 'bg-blue-700 text-white'
-                    : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                  : theme === 'dark'
+          >
+            Login
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsLogin(false);
+              resetForm();
+            }}
+            className={`w-1/2 py-2 font-medium transition-all ${
+              !isLogin
+                ? theme === 'dark'
+                  ? 'bg-blue-700 text-white'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                : theme === 'dark'
                   ? 'bg-gray-700 text-gray-300'
                   : 'bg-gray-100 text-gray-600'
               }`}
-            >
-              Sign Up
-            </button>
-          </div>
+          >
+            Sign Up
+          </button>
+        </div>
 
-          {/* Phone number input with country code dropdown */}
-          <div className="flex">
-            <div className="relative country-dropdown-container">
-              <button
-                type="button"
-                onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                disabled={otpSent}
-                className={`flex items-center justify-center  p-3 rounded-l-lg border border-gray-300 ${
-                  theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                } ${otpSent ? 'opacity-70' : ''}`}
-              >
-                <span className="font-medium">{selectedCountryCode}</span>
-                <svg
-                  className={`w-4 h-4 ml-1 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+        {!otpSent ? (
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmitOtp)}>
+            {/* Phone number input with country code dropdown */}
+            <div className="flex">
+              <div className="relative country-dropdown-container">
+                <button
+                  type="button"
+                  onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                  className={`flex items-center justify-center p-3 rounded-l-lg border border-gray-300 ${
+                    theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
+                  }`}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+                  <span className="font-medium">{selectedCountryCode}</span>
+                  <svg
+                    className={`w-4 h-4 ml-1 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-              {/* Country code dropdown */}
-              {showCountryDropdown && (
-                <div 
-                  className={`absolute z-10 w-48 mt-1 overflow-auto ${
-                    theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'
-                  } rounded-md shadow-lg max-h-60 border border-gray-300`}
-                >
-                  <ul className="py-1">
-                    {countryCodes.map((country) => (
-                      <li key={country.code}>
-                        <button
-                          type="button"
-                          className={`w-full text-left px-4 py-2 hover:${
-                            theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
-                          } ${selectedCountryCode === country.code ? 
-                            theme === 'dark' ? 'bg-blue-900' : 'bg-blue-100' : ''}`}
-                          onClick={() => {
-                            setSelectedCountryCode(country.code);
-                            setShowCountryDropdown(false);
-                          }}
-                        >
-                          <span className="font-medium">{country.code}</span> {country.country}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                {/* Country code dropdown */}
+                {showCountryDropdown && (
+                  <div
+                    className={`absolute z-10 w-48 mt-1 overflow-auto ${
+                      theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'
+                    } rounded-md shadow-lg max-h-60 border border-gray-300`}
+                  >
+                    <ul className="py-1">
+                      {countryCodes.map((country) => (
+                        <li key={country.code}>
+                          <button
+                            type="button"
+                            className={`w-full text-left px-4 py-2 hover:${
+                              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                            } ${selectedCountryCode === country.code ?
+                              theme === 'dark' ? 'bg-blue-900' : 'bg-blue-100' : ''}`}
+                            onClick={() => {
+                              setSelectedCountryCode(country.code);
+                              setShowCountryDropdown(false);
+                            }}
+                          >
+                            <span className="font-medium">{country.code}</span> {country.country}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                {...register("phoneNumber", {
+                  required: "Phone number is required",
+                  pattern: {
+                    value: /^[0-9]{10}$/,
+                    message: "Invalid phone number format",
+                  },
+                  validate: (value) => value.trim() !== "" || "Phone number cannot be empty or spaces only",
+                })}
+                className={`w-full border border-gray-300 rounded-r-lg p-3 outline-none ${
+                  theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
+                }`}
+              />
             </div>
+            {errors.phoneNumber && (
+              <p className="text-red-500 text-sm -mt-3">{errors.phoneNumber.message}</p>
+            )}
 
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              disabled={otpSent}
-              className={`w-full border border-gray-300 rounded-r-lg p-3  outline-none ${
-                theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-700'
-              }`}
-            />
-          </div>
+            {/* Name input (only for signup) */}
+            {!isLogin && (
+              <>
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  {...register("name", {
+                    required: "Name is required",
+                    minLength: {
+                      value: 3,
+                      message: "Name must be at least 3 characters",
+                    },
+                    pattern: {
+                      value: /^[A-Za-z\s]+$/,
+                      message: "Name can only contain letters and spaces",
+                    },
+                    validate: (value) => value.trim() !== "" || "Name cannot be empty or spaces only",
+                  })}
+                  className={`w-full border border-gray-300 rounded-lg p-3 outline-none ${
+                    theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
+                  }`}
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-sm -mt-3">{errors.name.message}</p>
+                )}
+              </>
+            )}
 
-          {/* Name input (only for signup) */}
-          {!isLogin && (
-            <input
-              type="text"
-              placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={`w-full border border-gray-300 rounded-lg p-3 outline-none ${
-                theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-700'
-              }`}
-              disabled={otpSent}
-            />
-          )}
-
-          {/* Conditional rendering based on OTP sent status */}
-          {!otpSent ? (
+            {/* Submit button */}
             <button
-              onClick={sendOtp}
+              type="submit"
               className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${
-                theme === 'dark'
-                  ? 'bg-blue-700 text-white hover:bg-blue-600'
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg'
+                !isValid
+                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                  : theme === "dark"
+                    ? "bg-blue-700 text-white hover:bg-blue-600"
+                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
               }`}
+              disabled={!isValid}
             >
               Send OTP
             </button>
-          ) : (
-            <>
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${
-                  theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-700'
-                }`}
-              />
+          </form>
+        ) : (
+          <form className="space-y-4" onSubmit={verifyOtp}>
+            {/* OTP input */}
+            <input
+              type="text"
+              placeholder="Enter OTP"
+              {...register("otp", {
+                required: "OTP is required",
+                pattern: {
+                  value: /^[0-9]{6}$/,
+                  message: "Invalid OTP format",
+                },
+                validate: (value) => value.trim() !== "" || "OTP cannot be empty or spaces only",
+              })}
+              className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${
+                theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
+              }`}
+            />
+            {errors.otp && (
+              <p className="text-red-500 text-sm -mt-3">{errors.otp.message}</p>
+            )}
 
-              <button
-                onClick={verifyOtp}
-                className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${
-                  theme === 'dark'
-                    ? 'bg-blue-700 text-white hover:bg-blue-600'
-                    : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg'
-                }`}
-              >
-                {isLogin ? "Login" : "Sign Up"}
-              </button>
+            {/* Submit and Reset buttons */}
+            <button
+              type="submit"
+              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${
+                !otp
+                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                  : theme === "dark"
+                    ? "bg-blue-700 text-white hover:bg-blue-600"
+                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
+              }`}
+              disabled={!otp}
+            >
+              {isLogin ? "Login" : "Sign Up"}
+            </button>
 
-              <button
-                onClick={resetForm}
-                className={`w-full py-2 rounded-lg font-medium ${
-                  theme === 'dark'
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Change Number
-              </button>
-            </>
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={resetForm}
+              className={`w-full py-2 rounded-lg font-medium ${
+                theme === "dark"
+                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              Change Number
+            </button>
+          </form>
+        )}
 
         {/* Toggle auth mode text */}
         <p className={`text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
+            type="button"
             onClick={toggleAuthMode}
             className={`font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}
           >

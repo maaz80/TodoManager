@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase-client";
 import { ThemeContext } from "../App";
 import { toast } from "react-toastify";
@@ -9,6 +9,7 @@ const Navbar = () => {
   const [userName, setUserName] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Use our contexts
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -47,6 +48,7 @@ const Navbar = () => {
     setSession(null);
     setUserName("");
     setIsMenuOpen(false);
+    navigate('/login')
     localStorage.removeItem('userName');
     localStorage.removeItem('userPhone');
     toast.success("Logged out successfully!");

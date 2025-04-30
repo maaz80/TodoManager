@@ -9,13 +9,15 @@ import { Link } from 'react-router-dom'
 const Todo = () => {
   const [tasks, setTasks] = useState([])
   const [userId, setUserId] = useState(null)
-  const [userName, setUserName] = useState("") 
+  const [userName, setUserName] = useState("")
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [showForm, setShowForm] = useState(false)
   const [taskModal, setTaskModal] = useState({ isOpen: false, task: null });
-  const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
+  const [openImage, setOpenImage] = useState(false)
+  const [createTaskLoading, setCreateTaskLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 10;
 
   const openTaskModal = (task) => {
@@ -89,19 +91,42 @@ const Todo = () => {
     setLoading(false);
   }
 
+
+  // Image Upload 
+  const uploadImage = async (file) => {
+    const filePath = `${file.name}-${Date.now()}`
+    const { error } = await supabase.storage.from('tasks-images').upload(filePath, file)
+
+    if (error) {
+      console.log(error)
+      return null
+    }
+    const { data } = supabase.storage.from('tasks-images').getPublicUrl(filePath)
+    return data.publicUrl
+  }
+
   // Add task
   const onSubmit = async (data) => {
+    setCreateTaskLoading(true)
     if (!userId) {
       toast.error('Please login first!')
       return;
     }
+    let imageUrlHere = null;
 
+    // Handle image upload
+    if (data.image && data.image[0]) {
+      const file = data.image[0]; // Get the uploaded file
+      imageUrlHere = await uploadImage(file);
+    }
     const { error } = await supabase.from('todo').insert([
       {
         title: data.title,
         due_date: data.dueDate,
         user_id: userId,
-        is_done: false
+        is_done: false,
+        description: data.description,
+        image_url: imageUrlHere
       }
     ])
 
@@ -110,6 +135,7 @@ const Todo = () => {
       console.error(error)
     } else {
       toast.success('Task added successfully!')
+      setCreateTaskLoading(false)
       setShowForm(false)
       reset()
       fetchTasks()
@@ -210,7 +236,7 @@ const Todo = () => {
       {/* Header */}
       <header className={`flex items-center justify-between mb-4 lg:mb-8 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{userName || "TaskMaster"}</h1> {/* Display user's name or fallback to "TaskMaster" */}
+          <h1 className="text-2xl md:text-3xl font-bold">{userName || "TaskMaster"}</h1>
           <p className="text-xs md:text-sm opacity-70">Organize your day with style</p>
         </div>
 
@@ -237,50 +263,120 @@ const Todo = () => {
       </header>
 
       {/* Add Task Form */}
-      {showForm && (
-        <div className={`mb-8 p-6 rounded-lg shadow-lg animate-fadeIn 
-          ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <div
+        className={`overflow-hidden transition-all duration-800 ease-in-out ${showForm ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          }`}
+      >
+        <div
+          className={`mb-8 p-6 rounded-lg shadow-lg animate-fadeIn ${theme === "dark" ? "bg-gray-800" : "bg-white"
+            }`}
+        >
           <h2 className="text-xl font-bold mb-4">Create New Task</h2>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
+            {/* Title  */}
             <div>
               <input
                 placeholder="Task title"
-                className={`w-full p-3 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'}`}
-                {...register('title', { required: true, minLength: 3 })}
+                className={`w-full p-3 rounded-lg border ${theme === "dark"
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-gray-50 border-gray-200"
+                  }`}
+                {...register("title", { required: true, minLength: { value: 3, message: 'Title must be at least 3 characters' }, validate: (value) => value.trim() !== "" || "Title cannot be empty or spaces only" })}
+
               />
               {errors.title && (
-                <span className="text-red-500 text-sm">Title must be at least 3 characters</span>
+                <span className="text-red-500 text-sm">
+                  {errors.title.message}
+                </span>
               )}
             </div>
 
-            <div className="flex items-end justify-between gap-1 md:gap-4">
-              <div className="flex-1">
-                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Due Date</label>
+            {/* Description  */}
+            <div>
+              <input
+                placeholder="Task description"
+                className={`w-full p-3 rounded-lg border ${theme === "dark"
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-gray-50 border-gray-200"
+                  }`}
+                {...register("description", { required: true, minLength: { value: 3, message: 'Description must be at least 3 characters' }, validate: (value) => value.trim() !== "" || "Description cannot be empty or spaces only" })}
+
+              />
+              {errors.description && (
+                <span className="text-red-500 text-sm">
+                  {errors.description.message}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col md:flex-row items-end justify-between gap-3 md:gap-4">
+
+              {/* Due Date upload button  */}
+              <div className="flex-1 w-full">
+                <label
+                  className={`block mb-1 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+                    }`}
+                >
+                  Due Date
+                </label>
                 <input
                   type="date"
-                  className={`w-full p-3 rounded-lg border cursor-pointer ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'}`}
-                  {...register('dueDate', { required: true })}
-                  min={format(new Date(), 'yyyy-MM-dd')}
+                  className={`w-full p-3 rounded-lg border cursor-pointer ${theme === "dark"
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-gray-50 border-gray-200"
+                    }`}
+                  {...register("dueDate", { required: true })}
+                  min={format(new Date(), "yyyy-MM-dd")}
                   onClick={(e) => e.target.showPicker()}
                 />
                 {errors.dueDate && (
-                  <span className="text-red-500 text-sm">Please select a due date</span>
+                  <span className="text-red-500 text-sm">
+                    Please select a due date
+                  </span>
                 )}
               </div>
+
+              {/* Image upload button */}
+              <div className="flex-1 ">
+                <label
+                  className={`block mb-1 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+                    }`}
+                >
+                  Upload Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className={`w-full p-3 rounded-lg border cursor-pointer ${theme === "dark"
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-gray-50 border-gray-200"
+                    }`}
+                  {...register("image")}
+                />
+                {errors.image && (
+                  <span className="text-red-500 text-sm">
+                    {errors.image.message || "Please select an image"}
+                  </span>
+                )}
+              </div>
+
               <button
                 type="submit"
                 disabled={!isValid}
-                className={`w-[40%] px-3 py-[16px] md:py-3 text-sm md:text-base rounded-lg text-white font-medium transition-all
-                  ${!isValid
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg'}`}
+                className={`w-[40%] px-3 py-[15px] md:py-3 text-sm md:text-base rounded-lg text-white font-medium transition-all ${!isValid
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : createTaskLoading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
+                  }`}
               >
-                Create Task
+                {createTaskLoading ? 'Creating...' : 'Create Task'}
               </button>
             </div>
           </form>
         </div>
-      )}
+      </div>
 
       {/* Task Filters */}
       <div className="flex task-filters  mb-8 pb-2 sticky top-16 z-10">
@@ -429,16 +525,31 @@ const Todo = () => {
               </button>
             </div>
 
-            <div className="mb-4">
-              <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Due date:</span>
-              <p className="font-medium">{format(new Date(taskModal.task.due_date), 'PPP')}</p>
+            <div className='flex items-center justify-between'>
+              <div>
+                <div className="mb-4">
+                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Due date:</span>
+                  <p className="font-medium">{format(new Date(taskModal.task.due_date), 'PPP')}</p>
+                </div>
+
+                <div className="mb-4">
+                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Task:</span>
+                  <p className="font-medium text-lg mt-1">{taskModal.task.title}</p>
+                </div>
+              </div>
+
+              {/* Image  */}
+              {taskModal.task.image_url && (
+                <div className='w-[50%] rounded-md overflow-hidden' onClick={() => setOpenImage(true)}>
+                  <img src={taskModal.task.image_url} alt="Uploaded Image" className='w-full max-h-[160px]  rounded-md object-cover' />
+                </div>
+              )}
             </div>
 
-            <div>
-              <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Task:</span>
-              <p className="font-medium text-lg mt-1">{taskModal.task.title}</p>
+            <div className='w-[90%]'>
+              <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Description:</span>
+              <p className="font-normal md:font-medium text-sm md:text-lg mt-1 break-words whitespace-pre-wrap">{taskModal.task.description}</p>
             </div>
-
             <div className="mt-6 flex justify-end space-x-3">
               <button
                 onClick={() => {
@@ -462,6 +573,29 @@ const Todo = () => {
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Open Image Modal */}
+      {openImage && taskModal.task.image_url && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
+          <div className="relative w-[98%] h-full flex items-center justify-center">
+            {/* Full-Screen Image */}
+            <img
+              src={taskModal.task.image_url}
+              alt="Uploaded Task"
+              className="max-w-full max-h-full object-contain"
+            />
+
+            {/* Close Button */}
+            <button
+              onClick={() => setOpenImage(false)}
+              className="absolute top-4 right-4 bg-gray-800 text-white px-3 py-1.5 rounded-full hover:bg-gray-700"
+              title="Close"
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}
