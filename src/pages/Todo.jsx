@@ -14,7 +14,10 @@ const Todo = () => {
   const [activeTab, setActiveTab] = useState('all')
   const [showForm, setShowForm] = useState(false)
   const [taskModal, setTaskModal] = useState({ isOpen: false, task: null });
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreTasks, setHasMoreTasks] = useState(true);
+  const tasksPerPage = 10;
+
   const openTaskModal = (task) => {
     setTaskModal({ isOpen: true, task });
   };
@@ -67,14 +70,23 @@ const Todo = () => {
   const fetchTasks = async () => {
     if (!userId) return;
 
+    setLoading(true);
+
+    const start = (currentPage - 1) * tasksPerPage;
+    const end = start + tasksPerPage - 1;
+
     const { data, error } = await supabase
       .from('todo')
       .select('*')
       .eq('user_id', userId)
       .order('due_date', { ascending: true })
-
+      .range(start, end)
     if (error) console.error(error)
-    else setTasks(data || [])
+    else {
+      setTasks(data || [])
+      setHasMoreTasks(data.length === tasksPerPage);
+    }
+    setLoading(false);
   }
 
   // Add task
@@ -133,9 +145,13 @@ const Todo = () => {
   }
 
   useEffect(() => {
-    if (userId) fetchTasks()
-  }, [userId])
+    if (userId) fetchTasks(currentPage)
+  }, [userId, currentPage])
 
+  // Handeling page change
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
   // Filter tasks based on active tab
   const getFilteredTasks = () => {
     switch (activeTab) {
@@ -286,7 +302,7 @@ const Todo = () => {
       </div>
 
       {/* Task List */}
-      <div className="space-y-8">
+      <div className="space-y-4 md:space-y-8">
         {userId ? (
           Object.entries(groupedTasks).length === 0 ? (
             <div className={`text-center py-16 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
@@ -329,7 +345,7 @@ const Todo = () => {
                             ? (theme === 'dark' ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white')
                             : (theme === 'dark' ? 'border-2 border-gray-600' : 'border-2 border-gray-300')}`}
                         onClick={(e) => {
-                          e.stopPropagation(); 
+                          e.stopPropagation();
                           markDone(task.id, task.is_done);
                         }}
                       >
@@ -344,7 +360,7 @@ const Todo = () => {
 
                       <button
                         onClick={(e) => {
-                          e.stopPropagation(); 
+                          e.stopPropagation();
                           deleteTask(task.id);
                         }}
                         className={`p-2 rounded-full hover:bg-red-100 transition-colors
@@ -355,6 +371,8 @@ const Todo = () => {
                     </div>
                   ))}
                 </div>
+
+
               </div>
             ))
           )
@@ -370,6 +388,24 @@ const Todo = () => {
             </Link>
           </div>
         )}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-end mt-4 space-x-2">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={` ${currentPage === 1 ? 'bg-gray-100 text-gray-300' : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg text-white'} px-4 py-2  rounded `}
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={!hasMoreTasks}
+          className={`px-4 py-2 ${hasMoreTasks ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg text-white' : 'bg-gray-100 text-gray-300'  }  rounded`}
+        >
+          Next
+        </button>
       </div>
 
 
