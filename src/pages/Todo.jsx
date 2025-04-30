@@ -266,7 +266,7 @@ const Todo = () => {
       )}
 
       {/* Task Filters */}
-      <div className="flex overflow-x-auto mb-8 pb-2 sticky top-16 z-10">
+      <div className="flex task-filters  mb-8 pb-2 sticky top-16 z-10">
         {['all', 'today', 'upcoming', 'completed', 'overdue'].map((tab) => (
           <button
             key={tab}

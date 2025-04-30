@@ -6,3 +6,13 @@
     font-weight: 400;
     font-style: normal;
   }
+
+  /* Hide scrollbar but allow scrolling */
+.task-filters {
+  overflow-x: auto;
+  scrollbar-width: none; /* For Firefox */
+}
+
+.task-filters::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Edge */
+}

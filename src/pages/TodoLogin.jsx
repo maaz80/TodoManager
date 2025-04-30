@@ -195,7 +195,7 @@ function TodoLogin() {
   return (
     <div className="flex items-center justify-center h-[540px] p-2 md:p-4">
       <ToastContainer />
-      <div className={`w-full max-w-md rounded-2xl shadow-xl p-1 md:p-8 space-y-3 md:space-y-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`w-full max-w-md rounded-2xl shadow-xl px-3 py-4 md:p-8 space-y-3 md:space-y-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'} text-center mt-2`}>
           {isLogin ? "Login to TaskMaster" : "SignUp in TaskMaster"}
         </h2>
