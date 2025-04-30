@@ -12,10 +12,8 @@ const Todo = () => {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [showForm, setShowForm] = useState(false)
-  // Todo.jsx में शुरुआत में यह स्टेट जोड़ें
   const [taskModal, setTaskModal] = useState({ isOpen: false, task: null });
-
-  // openTaskModal फंक्शन जोड़ें (fetchTasks के नीचे)
+  
   const openTaskModal = (task) => {
     setTaskModal({ isOpen: true, task });
   };

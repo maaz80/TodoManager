@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import Todo from './pages/Todo'
 import Navbar from './components/Navbar'
 import TodoLogin from './pages/TodoLogin'
+import InstallPrompt from './components/InstallPrompt' // Import the new component
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -35,34 +36,6 @@ const App = () => {
       : 'bg-gradient-to-br from-blue-50 to-purple-50';
   }, [theme]);
 
-  useEffect(() => {
-    let deferredPrompt;
-    const installButton = document.getElementById('install-btn');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-
-      if (installButton) {
-        installButton.style.display = 'block';
-
-        installButton.addEventListener('click', () => {
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-              console.log('User accepted the install prompt');
-            } else {
-              console.log('User dismissed the install prompt');
-            }
-            deferredPrompt = null;
-          });
-        });
-      }
-    });
-  }, []);
-
-
-
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       <div className={`poppins-regular min-h-[600px] ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-blue-50 to-purple-50'}`}>
@@ -71,9 +44,10 @@ const App = () => {
           <Route path="/" element={<Todo />} />
           <Route path="/login" element={<TodoLogin />} />
         </Routes>
-        <button id="install-btn" style={{ display: 'none', padding: '10px', background: '#1976d2', color: '#fff', borderRadius: '8px' }}>
-          Install App
-        </button>
+        
+        {/* Add the InstallPrompt component here */}
+        <InstallPrompt />
+        
         {/* Global Toast Container */}
         <ToastContainer position="bottom-right" theme={theme === 'dark' ? 'dark' : 'light'} />
       </div>
