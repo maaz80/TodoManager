@@ -168,6 +168,7 @@ const deleteTask = async (id) => {
     console.error(error);
     toast.error('Failed to delete task');
   } else {
+    fetchTasks()
     toast.success('Task deleted!');
   }
 };
