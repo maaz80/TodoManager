@@ -142,33 +142,71 @@ const Todo = () => {
     }
   }
 
-  // Mark done/undone
-  const markDone = async (id, isDone) => {
-    const { error } = await supabase
-      .from('todo')
-      .update({ is_done: !isDone })
-      .eq('id', id)
+ // Mark done/undone
+const markDone = async (id, isDone) => {
+  const { error } = await supabase
+    .from('todo')
+    .update({ is_done: !isDone })
+    .eq('id', id);
 
-    if (error) console.error(error)
-    else {
-      fetchTasks()
-      toast.success('Task updated!')
-    }
+  if (error) {
+    console.error(error);
+    toast.error('Failed to update task');
+  } else {
+    toast.success('Task updated!');
   }
+};
 
-  // Delete task
-  const deleteTask = async (id) => {
-    const { error } = await supabase
-      .from('todo')
-      .delete()
-      .eq('id', id)
+// Delete task
+const deleteTask = async (id) => {
+  const { error } = await supabase
+    .from('todo')
+    .delete()
+    .eq('id', id);
 
-    if (error) console.error(error)
-    else {
-      fetchTasks()
-      toast.success('Task deleted!')
-    }
+  if (error) {
+    console.error(error);
+    toast.error('Failed to delete task');
+  } else {
+    toast.success('Task deleted!');
   }
+};
+
+  useEffect(() => {
+    if (!userId) return;
+  
+    // Set up a real-time listener for the 'todo' table
+    const channel = supabase
+      .channel('todo-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'todo', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const { eventType, new: newTask, old: oldTask } = payload;
+  
+          setTasks((prevTasks) => {
+            switch (eventType) {
+              case 'INSERT':
+                return [...prevTasks, newTask]; // Add the new task
+              case 'UPDATE':
+                return prevTasks.map((task) =>
+                  task.id === newTask.id ? newTask : task
+                ); // Update the task
+              case 'DELETE':
+                return prevTasks.filter((task) => task.id !== oldTask.id); // Remove the deleted task
+              default:
+                return prevTasks;
+            }
+          });
+        }
+      )
+      .subscribe();
+  
+    // Clean up the listener when the component unmounts
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (userId) fetchTasks(currentPage)
