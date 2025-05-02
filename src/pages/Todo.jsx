@@ -5,9 +5,9 @@ import { format, isToday, isTomorrow, isPast, addDays } from 'date-fns'
 import { toast } from 'react-toastify'
 import { ThemeContext } from '../App'
 import { Link } from 'react-router-dom'
-import { FaCamera } from 'react-icons/fa'
 import ImageWithLoading from '../components/ImageLoading'
 import { IoCloseOutline } from 'react-icons/io5'
+import { LuImagePlus } from 'react-icons/lu'
 
 const Todo = () => {
   const [tasks, setTasks] = useState([])
@@ -75,10 +75,12 @@ const Todo = () => {
   }, [])
 
   // Fetch tasks
-  const fetchTasks = async () => {
+  const fetchTasks = async (page = currentPage) => {
     if (!userId) return;
 
-    setLoading(true);
+    if (tasks.length === 0) {
+      setLoading(true);
+    }
 
     const { count } = await supabase.from('todo').select('*', { count: 'exact', head: true }).eq('user_id', userId)
 
@@ -205,7 +207,6 @@ const Todo = () => {
       console.error(error);
       toast.error('Failed to delete task');
     } else {
-      fetchTasks()
       toast.success('Task deleted!');
     }
   };
@@ -252,7 +253,9 @@ const Todo = () => {
 
   // Handeling page change
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
+    if (newPage !== currentPage) {
+      setCurrentPage(newPage);
+    }
   };
 
   // Filter tasks based on active tab
@@ -340,7 +343,7 @@ const Todo = () => {
 
       {/* Add Task Form */}
       <div
-        className={`overflow-hidden transition-all duration-800 ease-in-out ${showForm ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+        className={`overflow-hidden transition-all duration-800 ease-in-out ${showForm ? "max-h-[650px] opacity-100" : "max-h-0 opacity-0"
           }`}
       >
         <div
@@ -351,18 +354,23 @@ const Todo = () => {
             <h2 className="text-xl font-bold ">Create New Task</h2>
             <button
               onClick={() => setShowForm(false)}
-             className='bg-gray-200 p-2 hover:bg-gray-300 rounded-full hover:shadow-md transition-all duration-300'
+              className='bg-gray-200 p-2 hover:bg-gray-300 rounded-full hover:shadow-md transition-all duration-300'
             >
               <IoCloseOutline />
             </button>
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2 md:space-y-4">
 
             {/* Title  */}
             <div>
-              <input
+              <label
+                className={`block mb-1 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}
+              >
+                Title
+              </label>
+              <textarea
                 placeholder="Task title"
-                className={`w-full p-3 rounded-lg border ${theme === "dark"
+                className={`w-full p-3 h-[50px] rounded-lg border resize-none ${theme === "dark"
                   ? "bg-gray-700 border-gray-600 text-white"
                   : "bg-gray-50 border-gray-200"
                   }`}
@@ -378,14 +386,18 @@ const Todo = () => {
 
             {/* Description  */}
             <div>
-              <input
+              <label
+                className={`block mb-1 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}
+              >
+                Description
+              </label>
+              <textarea
                 placeholder="Task description"
-                className={`w-full p-3 rounded-lg border ${theme === "dark"
+                className={`w-full p-3 h-24 md:h-32 rounded-lg border resize-none ${theme === "dark"
                   ? "bg-gray-700 border-gray-600 text-white"
                   : "bg-gray-50 border-gray-200"
                   }`}
                 {...register("description", { required: true, minLength: { value: 3, message: 'Description must be at least 3 characters' }, validate: (value) => value.trim() !== "" || "Description cannot be empty or spaces only" })}
-
               />
               {errors.description && (
                 <span className="text-red-500 text-sm">
@@ -393,22 +405,20 @@ const Todo = () => {
                 </span>
               )}
             </div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
 
-            <div className="flex flex-col md:flex-row items-end justify-between gap-3 md:gap-4">
-
-              {/* Due Date upload button  */}
+              {/* Due Date upload button */}
               <div className="flex-1 w-full">
                 <label
-                  className={`block mb-1 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
-                    }`}
+                  className={`block mb-1 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}
                 >
                   Due Date
                 </label>
                 <input
                   type="date"
                   className={`w-full p-3 rounded-lg border cursor-pointer ${theme === "dark"
-                    ? "bg-gray-700 border-gray-600 text-white"
-                    : "bg-gray-50 border-gray-200"
+                      ? "bg-gray-700 border-gray-600 text-white"
+                      : "bg-gray-50 border-gray-200"
                     }`}
                   {...register("dueDate", { required: true })}
                   min={format(new Date(), "yyyy-MM-dd")}
@@ -438,46 +448,61 @@ const Todo = () => {
                     {...register("image")}
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
-                        // This ensures React Hook Form gets the updated value
                         register("image").onChange(e);
                         setSelectedFileName(e.target.files[0].name);
                       }
                     }}
                   />
 
-                  {/* Custom Label */}
+                  {/* Creative Custom Label */}
                   <label
                     htmlFor="imageUpload"
-                    className={`flex items-center justify-start overflow-hidden gap-2 w-full p-3 rounded-lg border cursor-pointer ${theme === "dark"
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-gray-50 border-gray-200"
-                      }`}
+                    className={`group relative flex flex-col items-start justify-center h-[50px] w-full p-3 rounded-lg border-2 border-dashed cursor-pointer transition-all duration-300 overflow-hidden
+        ${selectedFileName
+                        ? (theme === "dark" ? "border-blue-500 bg-blue-900/20" : "border-blue-500 bg-blue-50")
+                        : (theme === "dark" ? "border-gray-600 hover:border-blue-500 bg-gray-800 hover:bg-gray-700" : "border-gray-300 hover:border-blue-500 bg-gray-50 hover:bg-blue-50")}
+      `}
                   >
-                    <span className="material-icons"><FaCamera /></span>
-                    <span className="truncate max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap">
-                      {selectedFileName || "Upload Image"}
-                    </span>
+                    {/* Background Animation Element */}
+                    <div className={`absolute inset-0 bg-gradient-to-r ${theme === "dark" ? "from-blue-900/30 to-purple-900/30" : "from-blue-100/50 to-purple-100/50"} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+
+                    {/* Upload Text or Filename with Icon */}
+                    <div className="flex items-center justify-center gap-2 relative z-10">
+                    <LuImagePlus className={`text-lg ${theme === "dark" ? "text-gray-300" : "text-gray-500"}`} />
+                      {selectedFileName ? (
+                        <span className="font-medium truncate max-w-[120px] text-sm overflow-hidden text-ellipsis whitespace-nowrap">
+                          {selectedFileName}
+                        </span>
+                      ) : (
+                        <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                          Select image
+                        </span>
+                      )}
+                    </div>
                   </label>
                 </div>
                 {errors.image && (
-                  <span className="text-red-500 text-sm">
+                  <span className="text-red-500 text-sm mt-1">
                     {errors.image.message || "Please select an image"}
                   </span>
                 )}
               </div>
 
-              <button
-                type="submit"
-                disabled={!isValid}
-                className={`w-[40%] px-3 py-[15px] md:py-3 text-sm md:text-base rounded-lg text-white font-medium transition-all ${!isValid
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : createTaskLoading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
-                  }`}
-              >
-                {createTaskLoading ? 'Creating...' : 'Create Task'}
-              </button>
+              {/* Submit Button */}
+              <div className="w-full md:w-auto md:self-end">
+                <button
+                  type="submit"
+                  disabled={!isValid}
+                  className={`w-full md:w-auto px-6 py-3 text-sm md:text-base rounded-lg text-white font-medium transition-all ${!isValid
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : createTaskLoading
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
+                    }`}
+                >
+                  {createTaskLoading ? 'Creating...' : 'Create Task'}
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -593,7 +618,7 @@ const Todo = () => {
       </div>
 
       {/* Pagination Controls */}
-      {userId && filteredTasks.length > 0 && (
+      {userId && filteredTasks.length > 0 && totalPages > 1 && (
         <div className="flex justify-end mt-8 mb-4">
           <nav className="flex items-center space-x-1">
             {/* Previous Button */}
