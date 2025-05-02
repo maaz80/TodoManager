@@ -5,6 +5,9 @@ import { format, isToday, isTomorrow, isPast, addDays } from 'date-fns'
 import { toast } from 'react-toastify'
 import { ThemeContext } from '../App'
 import { Link } from 'react-router-dom'
+import { FaCamera } from 'react-icons/fa'
+import ImageWithLoading from '../components/ImageLoading'
+import { IoCloseOutline } from 'react-icons/io5'
 
 const Todo = () => {
   const [tasks, setTasks] = useState([])
@@ -17,6 +20,9 @@ const Todo = () => {
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
   const [openImage, setOpenImage] = useState(false)
   const [createTaskLoading, setCreateTaskLoading] = useState(false)
+  const [selectedFileName, setSelectedFileName] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 10;
 
@@ -74,6 +80,11 @@ const Todo = () => {
 
     setLoading(true);
 
+    const { count } = await supabase.from('todo').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+
+    setTotalCount(count || 0);
+    setTotalPages(Math.ceil(count / tasksPerPage) || 1);
+
     const start = (currentPage - 1) * tasksPerPage;
     const end = start + tasksPerPage - 1;
 
@@ -91,7 +102,33 @@ const Todo = () => {
     setLoading(false);
   }
 
+  // Pagination Function 
+  const calculatePageNumber = (index) => {
+    // For small number of pages, show all pages
+    if (totalPages <= 5) {
+      return index + 1;
+    }
 
+    // For large number of pages, show a window around current page
+    if (currentPage <= 3) {
+      if (index < 4) return index + 1;
+      if (index === 4) return totalPages;
+      return -1;
+    } else if (currentPage >= totalPages - 2) {
+      // Near the end
+      if (index === 0) return 1;
+      if (index > 0) return totalPages - (4 - index);
+      return -1;
+    } else {
+      // Middle case
+      if (index === 0) return 1;
+      if (index === 4) return totalPages;
+      if (index === 1) return currentPage - 1;
+      if (index === 2) return currentPage;
+      if (index === 3) return currentPage + 1;
+      return -1; // Ellipsis
+    }
+  };
   // Image Upload 
   const uploadImage = async (file) => {
     const filePath = `${file.name}-${Date.now()}`
@@ -142,40 +179,40 @@ const Todo = () => {
     }
   }
 
- // Mark done/undone
-const markDone = async (id, isDone) => {
-  const { error } = await supabase
-    .from('todo')
-    .update({ is_done: !isDone })
-    .eq('id', id);
+  // Mark done/undone
+  const markDone = async (id, isDone) => {
+    const { error } = await supabase
+      .from('todo')
+      .update({ is_done: !isDone })
+      .eq('id', id);
 
-  if (error) {
-    console.error(error);
-    toast.error('Failed to update task');
-  } else {
-    toast.success('Task updated!');
-  }
-};
+    if (error) {
+      console.error(error);
+      toast.error('Failed to update task');
+    } else {
+      toast.success('Task updated!');
+    }
+  };
 
-// Delete task
-const deleteTask = async (id) => {
-  const { error } = await supabase
-    .from('todo')
-    .delete()
-    .eq('id', id);
+  // Delete task
+  const deleteTask = async (id) => {
+    const { error } = await supabase
+      .from('todo')
+      .delete()
+      .eq('id', id);
 
-  if (error) {
-    console.error(error);
-    toast.error('Failed to delete task');
-  } else {
-    fetchTasks()
-    toast.success('Task deleted!');
-  }
-};
+    if (error) {
+      console.error(error);
+      toast.error('Failed to delete task');
+    } else {
+      fetchTasks()
+      toast.success('Task deleted!');
+    }
+  };
 
   useEffect(() => {
     if (!userId) return;
-  
+
     // Set up a real-time listener for the 'todo' table
     const channel = supabase
       .channel('todo-changes')
@@ -184,7 +221,7 @@ const deleteTask = async (id) => {
         { event: '*', schema: 'public', table: 'todo', filter: `user_id=eq.${userId}` },
         (payload) => {
           const { eventType, new: newTask, old: oldTask } = payload;
-  
+
           setTasks((prevTasks) => {
             switch (eventType) {
               case 'INSERT':
@@ -202,7 +239,7 @@ const deleteTask = async (id) => {
         }
       )
       .subscribe();
-  
+
     // Clean up the listener when the component unmounts
     return () => {
       supabase.removeChannel(channel);
@@ -310,7 +347,15 @@ const deleteTask = async (id) => {
           className={`mb-8 p-6 rounded-lg shadow-lg animate-fadeIn ${theme === "dark" ? "bg-gray-800" : "bg-white"
             }`}
         >
-          <h2 className="text-xl font-bold mb-4">Create New Task</h2>
+          <div className='flex items-center justify-between mb-4'>
+            <h2 className="text-xl font-bold ">Create New Task</h2>
+            <button
+              onClick={() => setShowForm(false)}
+             className='bg-gray-200 p-2 hover:bg-gray-300 rounded-full hover:shadow-md transition-all duration-300'
+            >
+              <IoCloseOutline />
+            </button>
+          </div>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
             {/* Title  */}
@@ -377,22 +422,43 @@ const deleteTask = async (id) => {
               </div>
 
               {/* Image upload button */}
-              <div className="flex-1 ">
+              <div className="flex-1 w-full">
                 <label
-                  className={`block mb-1 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
-                    }`}
+                  className={`block mb-1 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}
                 >
                   Upload Image
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className={`w-full p-3 rounded-lg border cursor-pointer ${theme === "dark"
-                    ? "bg-gray-700 border-gray-600 text-white"
-                    : "bg-gray-50 border-gray-200"
-                    }`}
-                  {...register("image")}
-                />
+                <div className="relative">
+                  {/* Hidden File Input */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="imageUpload"
+                    className="hidden"
+                    {...register("image")}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        // This ensures React Hook Form gets the updated value
+                        register("image").onChange(e);
+                        setSelectedFileName(e.target.files[0].name);
+                      }
+                    }}
+                  />
+
+                  {/* Custom Label */}
+                  <label
+                    htmlFor="imageUpload"
+                    className={`flex items-center justify-start overflow-hidden gap-2 w-full p-3 rounded-lg border cursor-pointer ${theme === "dark"
+                      ? "bg-gray-700 border-gray-600 text-white"
+                      : "bg-gray-50 border-gray-200"
+                      }`}
+                  >
+                    <span className="material-icons"><FaCamera /></span>
+                    <span className="truncate max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap">
+                      {selectedFileName || "Upload Image"}
+                    </span>
+                  </label>
+                </div>
                 {errors.image && (
                   <span className="text-red-500 text-sm">
                     {errors.image.message || "Please select an image"}
@@ -404,10 +470,10 @@ const deleteTask = async (id) => {
                 type="submit"
                 disabled={!isValid}
                 className={`w-[40%] px-3 py-[15px] md:py-3 text-sm md:text-base rounded-lg text-white font-medium transition-all ${!isValid
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : createTaskLoading
                     ? "bg-gray-400 cursor-not-allowed"
-                    : createTaskLoading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
+                    : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
                   }`}
               >
                 {createTaskLoading ? 'Creating...' : 'Create Task'}
@@ -527,24 +593,79 @@ const deleteTask = async (id) => {
       </div>
 
       {/* Pagination Controls */}
-      {userId &&
-        <div className="flex justify-end mt-4 space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className={` ${currentPage === 1 ? 'bg-gray-100 text-gray-300' : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg text-white'} px-4 py-2  rounded `}
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={!hasMoreTasks}
-            className={`px-4 py-2 ${hasMoreTasks ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg text-white' : 'bg-gray-100 text-gray-300'}  rounded`}
-          >
-            Next
-          </button>
+      {userId && filteredTasks.length > 0 && (
+        <div className="flex justify-end mt-8 mb-4">
+          <nav className="flex items-center space-x-1">
+            {/* Previous Button */}
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`flex items-center pr-3 pl-1 py-2 rounded-md ${currentPage === 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : theme === 'dark'
+                  ? 'bg-gray-700 text-white hover:bg-gray-600'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                } transition-colors`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span className="ml-1">Previous</span>
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(5, Math.max(totalPages, 1)) }).map((_, index) => {
+                const pageNumber = calculatePageNumber(index);
+                if (pageNumber === -1) {
+                  // Render ellipsis
+                  return (
+                    <span
+                      key={`ellipsis-${index}`}
+                      className={`px-3 py-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                    >
+                      ...
+                    </span>
+                  );
+                }
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => handlePageChange(pageNumber)}
+                    className={`w-9 h-10 p-2 rounded-md ${currentPage === pageNumber
+                      ? theme === 'dark'
+                        ? 'bg-blue-700 text-white'
+                        : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                      : theme === 'dark'
+                        ? 'bg-gray-700 text-white hover:bg-gray-600'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                      } transition-colors`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={!hasMoreTasks || currentPage === totalPages}
+              className={`flex items-center pl-3 pr-1 py-2 rounded-md ${!hasMoreTasks || currentPage === totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : theme === 'dark'
+                  ? 'bg-gray-700 text-white hover:bg-gray-600'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                } transition-colors`}
+            >
+              <span className="mr-1">Next</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </nav>
         </div>
-      }
+      )}
 
 
       {/* Task Modal */}
@@ -580,7 +701,7 @@ const deleteTask = async (id) => {
               {/* Image  */}
               {taskModal.task.image_url && (
                 <div className='w-full md:w-[50%] rounded-md overflow-hidden' onClick={() => setOpenImage(true)}>
-                  <img src={taskModal.task.image_url} alt="Uploaded Image" className='w-full max-h-[160px]  rounded-md object-cover' />
+                  <ImageWithLoading imageUrl={taskModal.task.image_url} />
                 </div>
               )}
             </div>

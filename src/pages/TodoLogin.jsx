@@ -260,7 +260,7 @@ function TodoLogin() {
   };
 
   return (
-    <div className="flex items-center justify-center h-[540px] p-2 md:p-4">
+    <div className={`flex items-center justify-center h-[665px] p-2 md:p-4 ${theme === 'dark' ? 'bg-gradient-to-r from-gray-800 to-blue-600' : 'bg-gradient-to-r from-blue-100 to-purple-400'}`} >
       <ToastContainer />
       <div className={`w-full max-w-md rounded-2xl shadow-xl px-3 py-4 md:p-8 space-y-3 md:space-y-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'} text-center mt-2`}>
