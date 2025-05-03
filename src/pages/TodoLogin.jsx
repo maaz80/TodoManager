@@ -74,15 +74,14 @@ function TodoLogin() {
         const timeoutId = setTimeout(() => {
           console.log("OTP detection timed out");
           ac.abort();
-        }, 60000); // 1 minute timeout
+        }, 60000); 
         
         // Start listening for SMS
         const credential = await navigator.credentials.get({
           otp: { transport: ['sms'] },
           signal
         });
-        
-        // Clear the timeout since we got a response
+    
         clearTimeout(timeoutId);
         
         // Check if we successfully got the OTP code
@@ -93,7 +92,7 @@ function TodoLogin() {
           setValue("otp", credential.code);
           toast.success("OTP automatically detected!");
           
-          // Optional: Auto-submit after a short delay
+          // Auto-submit 
           // Uncomment this if you want automatic submission
           // setTimeout(() => {
           //   console.log("Auto-submitting form...");
@@ -117,10 +116,9 @@ function TodoLogin() {
   useEffect(() => {
     if (otpSent) {
       console.log("OTP sent, attempting to setup auto-detection");
-      // Small delay to ensure DOM is ready
       setTimeout(() => {
         attemptOtpAutofill();
-      }, 1000);
+      }, 10000);
     }
   }, [otpSent]);
 
