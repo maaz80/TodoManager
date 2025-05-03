@@ -211,10 +211,10 @@ const Todo = () => {
     }
   };
 
+  // Set up a real-time listener for the 'todo' table
   useEffect(() => {
     if (!userId) return;
 
-    // Set up a real-time listener for the 'todo' table
     const channel = supabase
       .channel('todo-changes')
       .on(
@@ -247,6 +247,7 @@ const Todo = () => {
     };
   }, [userId]);
 
+  // Fetch task acc to current page 
   useEffect(() => {
     if (userId) fetchTasks(currentPage)
   }, [userId, currentPage])
@@ -273,6 +274,50 @@ const Todo = () => {
         return tasks
     }
   }
+
+
+  // Fetching total task with respect to filters for pagination 
+  useEffect(() => {
+    const fetchFilteredTasksCount = async () => {
+      if (!userId) return;
+  
+      let query = supabase.from('todo').select('*', { count: 'exact', head: true }).eq('user_id', userId);
+  
+      switch (activeTab) {
+        case 'today':
+          query = query.filter('due_date', 'eq', format(new Date(), 'yyyy-MM-dd'));
+          break;
+        case 'upcoming':
+          query = query.filter('due_date', 'gt', format(new Date(), 'yyyy-MM-dd'));
+          break;
+        case 'completed':
+          query = query.filter('is_done', 'eq', true);
+          break;
+        case 'overdue':
+          query = query.filter('due_date', 'lt', format(new Date(), 'yyyy-MM-dd')).filter('is_done', 'eq', false);
+          break;
+        default:
+          break;
+      }
+  
+      // Fetch the total count of filtered tasks
+      const { count, error } = await query;
+  
+      if (error) {
+        console.error('Error fetching filtered tasks count:', error);
+        return;
+      }
+  
+      setTotalPages(Math.ceil(count / tasksPerPage) || 1);
+      setTotalCount(count || 0);
+  
+      // console.log('Filtered Tasks Count:', count);
+      // console.log('Tasks Per Page:', tasksPerPage);
+      // console.log('Total Pages:', Math.ceil(count / tasksPerPage) || 1);
+    };
+  
+    fetchFilteredTasksCount();
+  }, [activeTab, userId]);
 
   const filteredTasks = getFilteredTasks()
 

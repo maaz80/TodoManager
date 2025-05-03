@@ -158,6 +158,8 @@ function TodoLogin() {
           signal: abortController.signal
         })
         clearTimeout(timeout)
+
+        // Message i am getting 
         // Sent from your Twilio trial account - Your verification code for TaskMaster is: 144331 
         // @xtodomanager.netlify.app #144331
         if (content && content.code) {
@@ -180,7 +182,7 @@ function TodoLogin() {
       console.log("OTP sent, attempting autofill");
       setTimeout(() => {
         attemptOtpAutofill();
-      }, 1000);
+      }, 4000);
     }
   }, [otpSent]); 
 

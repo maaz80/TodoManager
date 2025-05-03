@@ -10,6 +10,7 @@ export default function swDev() {
        // Check for updates
        registration.onupdatefound = () => {
         const installingWorker = registration.installing;
+        console.log('New version installing...');
         installingWorker.onstatechange = () => {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
