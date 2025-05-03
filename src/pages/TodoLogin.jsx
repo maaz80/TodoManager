@@ -10,11 +10,11 @@ function TodoLogin() {
   const [isLogin, setIsLogin] = useState(true);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState("+91"); // Default to India
-  
+
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
-  
-  // React Hook Form with setValue included explicitly
+
+  // React Hook Form
   const {
     register,
     handleSubmit,
@@ -41,7 +41,17 @@ function TodoLogin() {
     { code: "+1", country: "US/Canada" },
     { code: "+44", country: "UK" },
     { code: "+91", country: "India" },
-    // ...other country codes
+    { code: "+61", country: "Australia" },
+    { code: "+49", country: "Germany" },
+    { code: "+33", country: "France" },
+    { code: "+86", country: "China" },
+    { code: "+81", country: "Japan" },
+    { code: "+7", country: "Russia" },
+    { code: "+55", country: "Brazil" },
+    { code: "+27", country: "South Africa" },
+    { code: "+971", country: "UAE" },
+    { code: "+65", country: "Singapore" },
+    { code: "+82", country: "South Korea" },
   ];
 
   // Close dropdown when clicking outside
@@ -57,66 +67,6 @@ function TodoLogin() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showCountryDropdown]);
-
-  // NEW: Auto OTP Detection function
-  const attemptOtpAutofill = async () => {
-    console.log("Starting OTP detection attempt...");
-    // Check if the Web OTP API is supported
-    if ('OTPCredential' in window) {
-      try {
-        console.log("Browser supports OTP API, waiting for SMS...");
-        
-        // Create a new AbortController for the timeout
-        const ac = new AbortController();
-        const signal = ac.signal;
-        
-        // Set a timeout to abort if it takes too long
-        const timeoutId = setTimeout(() => {
-          console.log("OTP detection timed out");
-          ac.abort();
-        }, 60000); 
-        
-        // Start listening for SMS
-        const credential = await navigator.credentials.get({
-          otp: { transport: ['sms'] },
-          signal
-        });
-    
-        clearTimeout(timeoutId);
-        
-        // Check if we successfully got the OTP code
-        if (credential && credential.code) {
-          console.log("OTP automatically detected:", credential.code);
-          
-          // Set the OTP code in the form
-          setValue("otp", credential.code);
-          toast.success("OTP automatically detected!");
-          
-          // Auto-submit 
-          // setTimeout(() => {
-          //   console.log("Auto-submitting form...");
-          //   document.getElementById("otp-form").dispatchEvent(
-          //     new Event("submit", { cancelable: true, bubbles: true })
-          //   );
-          // }, 500);
-        }
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error("Error during OTP detection:", error);
-        }
-      }
-    } else {
-      console.log("Web OTP API not supported in this browser");
-    }
-  };
-
-  // NEW: Trigger OTP autofill when the OTP form is displayed
-  useEffect(() => {
-    if (otpSent) {
-      console.log("OTP sent, attempting to setup auto-detection");
-        attemptOtpAutofill();
-    }
-  }, [otpSent]);
 
   // Get full phone with country code
   const getFullPhone = () => {
@@ -163,7 +113,7 @@ function TodoLogin() {
             .select('phone')
             .eq('phone', fullPhone)
             .single();
-          
+
           if (error || !data) {
             toast.info("Number not registered! Please sign up instead.");
             setIsLogin(false);
@@ -192,10 +142,51 @@ function TodoLogin() {
     }
   };
 
+  // Otp auto detection 
+  const attemptOtpAutofill = async () => {
+    if ('OTPCredential' in window) {
+      try {
+        console.log("Starting OTP detection...");
+        // Listen the SMS and get the OTP 
+        const abortController = new AbortController()
+        const timeout = setTimeout(() => abortController.abort(), 60000)
+
+        const content = await navigator.credentials.get({
+          otp: {
+            transport: ['sms']
+          },
+          signal: abortController.signal
+        })
+        clearTimeout(timeout)
+
+        if (content && content.code) {
+          console.log("OTP detected:", content.code);
+          setValue('otp', content.code)
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('OTP Autofill Error: ', error)
+        }
+      }
+    } else {
+      console.warn('OTP Credential API not supported in this browser.')
+    }
+  }
+
+  // Runs the OTP autofill function when OTP is sent
+  useEffect(() => {
+    if (otpSent) {
+      console.log("OTP sent, attempting autofill");
+      toast.info("OTP sent, attempting autofill...");
+        attemptOtpAutofill();
+    }
+  }, [otpSent]); 
+
+
   // OTP verify
   const verifyOtp = async (e) => {
     e.preventDefault();
-    
+
     if (!otp) {
       toast.error("Please enter the OTP!");
       return;
@@ -311,7 +302,7 @@ function TodoLogin() {
   };
 
   return (
-    <div className={`flex items-center justify-center h-[576px] md:h-[665px] p-2 md:p-4 ${theme === 'dark' ? 'bg-gradient-to-r from-gray-800 to-blue-600' : 'bg-gradient-to-r from-blue-100 to-purple-400'}`} >
+    <div className={`flex items-center justify-center h-[576px] md:h-[665px] p-2 md:p-4 ${theme === 'dark' ? 'bg-gradient-to-r from-gray-800 to-blue-600' : 'bg-gradient-to-r from-blue-100 to-purple-200'}`} >
       <ToastContainer />
       <div className={`w-full max-w-md rounded-2xl shadow-xl px-3 py-4 md:p-8 space-y-3 md:space-y-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'} text-center mt-2`}>
@@ -330,12 +321,12 @@ function TodoLogin() {
               resetForm();
             }}
             className={`w-1/2 py-2 font-medium transition-all ${isLogin
-                ? theme === 'dark'
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                : theme === 'dark'
-                  ? 'bg-gray-700 text-gray-300'
-                  : 'bg-gray-100 text-gray-600'
+              ? theme === 'dark'
+                ? 'bg-blue-700 text-white'
+                : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+              : theme === 'dark'
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-600'
               }`}
           >
             Login
@@ -346,14 +337,13 @@ function TodoLogin() {
               setIsLogin(false);
               resetForm();
             }}
-            className={`w-1/2 py-2 font-medium transition-all ${
-              !isLogin
-                ? theme === 'dark'
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                : theme === 'dark'
-                  ? 'bg-gray-700 text-gray-300'
-                  : 'bg-gray-100 text-gray-600'
+            className={`w-1/2 py-2 font-medium transition-all ${!isLogin
+              ? theme === 'dark'
+                ? 'bg-blue-700 text-white'
+                : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+              : theme === 'dark'
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-600'
               }`}
           >
             Sign Up
@@ -368,9 +358,8 @@ function TodoLogin() {
                 <button
                   type="button"
                   onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                  className={`flex items-center justify-center p-3 rounded-l-lg border border-gray-300 ${
-                    theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                  }`}
+                  className={`flex items-center justify-center p-3 rounded-l-lg border border-gray-300 ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
+                    }`}
                 >
                   <span className="font-medium">{selectedCountryCode}</span>
                   <svg
@@ -386,19 +375,17 @@ function TodoLogin() {
                 {/* Country code dropdown */}
                 {showCountryDropdown && (
                   <div
-                    className={`absolute z-10 w-48 mt-1 overflow-auto ${
-                      theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'
-                    } rounded-md shadow-lg max-h-60 border border-gray-300`}
+                    className={`absolute z-10 w-48 mt-1 overflow-auto ${theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'
+                      } rounded-md shadow-lg max-h-60 border border-gray-300`}
                   >
                     <ul className="py-1">
                       {countryCodes.map((country) => (
                         <li key={country.code}>
                           <button
                             type="button"
-                            className={`w-full text-left px-4 py-2 hover:${
-                              theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
-                            } ${selectedCountryCode === country.code ?
-                              theme === 'dark' ? 'bg-blue-900' : 'bg-blue-100' : ''}`}
+                            className={`w-full text-left px-4 py-2 hover:${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                              } ${selectedCountryCode === country.code ?
+                                theme === 'dark' ? 'bg-blue-900' : 'bg-blue-100' : ''}`}
                             onClick={() => {
                               setSelectedCountryCode(country.code);
                               setShowCountryDropdown(false);
@@ -424,9 +411,8 @@ function TodoLogin() {
                   },
                   validate: (value) => value.trim() !== "" || "Phone number cannot be empty or spaces only",
                 })}
-                className={`w-full border border-gray-300 rounded-r-lg p-3 outline-none ${
-                  theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
-                }`}
+                className={`w-full border border-gray-300 rounded-r-lg p-3 outline-none ${theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
+                  }`}
               />
             </div>
             {errors.phoneNumber && (
@@ -451,9 +437,8 @@ function TodoLogin() {
                     },
                     validate: (value) => value.trim() !== "" || "Name cannot be empty or spaces only",
                   })}
-                  className={`w-full border border-gray-300 rounded-lg p-3 outline-none ${
-                    theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
-                  }`}
+                  className={`w-full border border-gray-300 rounded-lg p-3 outline-none ${theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
+                    }`}
                 />
                 {errors.name && (
                   <p className="text-red-500 text-sm -mt-3">{errors.name.message}</p>
@@ -464,13 +449,12 @@ function TodoLogin() {
             {/* Submit button */}
             <button
               type="submit"
-              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${
-                !isValid
-                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : theme === "dark"
-                    ? "bg-blue-700 text-white hover:bg-blue-600"
-                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
-              }`}
+              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${!isValid
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                : theme === "dark"
+                  ? "bg-blue-700 text-white hover:bg-blue-600"
+                  : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
+                }`}
               disabled={!isValid}
             >
               Send OTP
@@ -478,7 +462,7 @@ function TodoLogin() {
           </form>
         ) : (
           <form className="space-y-4" onSubmit={verifyOtp} id="otp-form">
-            {/* OTP input with autofill attributes */}
+            {/* OTP input */}
             <input
               type="text"
               placeholder="Enter OTP"
@@ -488,7 +472,7 @@ function TodoLogin() {
                   value: /^[0-9]{6}$/,
                   message: "Invalid OTP format",
                 },
-                minLength:{
+                minLength: {
                   value: 6,
                   message: "OTP must be 6 digits",
                 },
@@ -496,9 +480,8 @@ function TodoLogin() {
               })}
               autoComplete="one-time-code"
               inputMode="numeric"
-              className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${
-                theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
-              }`}
+              className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
+                }`}
             />
             {errors.otp && (
               <p className="text-red-500 text-sm -mt-3">{errors.otp.message}</p>
@@ -507,13 +490,12 @@ function TodoLogin() {
             {/* Submit and Reset buttons */}
             <button
               type="submit"
-              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${
-                !otp
-                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : theme === "dark"
-                    ? "bg-blue-700 text-white hover:bg-blue-600"
-                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
-              }`}
+              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${!otp
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                : theme === "dark"
+                  ? "bg-blue-700 text-white hover:bg-blue-600"
+                  : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
+                }`}
               disabled={!otp}
             >
               {isLogin ? "Login" : "Sign Up"}
@@ -522,11 +504,10 @@ function TodoLogin() {
             <button
               type="button"
               onClick={resetForm}
-              className={`w-full py-2 rounded-lg font-medium ${
-                theme === "dark"
-                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+              className={`w-full py-2 rounded-lg font-medium ${theme === "dark"
+                ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
             >
               Change Number
             </button>
