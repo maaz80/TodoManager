@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { ThemeContext } from "../App";
 import { useForm } from "react-hook-form";
+import OTPInput from "react-otp-input";
 
 function TodoLogin() {
   const [otpSent, setOtpSent] = useState(false);
@@ -189,9 +190,9 @@ function TodoLogin() {
   // OTP verify
   const verifyOtp = async (e) => {
     e.preventDefault();
-
-    if (!otp) {
-      toast.error("Please enter the OTP!");
+  
+    if (!otp || otp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP!");
       return;
     }
 
@@ -466,26 +467,23 @@ function TodoLogin() {
         ) : (
           <form className="space-y-4" onSubmit={verifyOtp} id="otp-form">
             {/* OTP input */}
-            <input
-              type="text"
-              placeholder="Enter OTP"
-              {...register("otp", {
-                required: "OTP is required",
-                pattern: {
-                  value: /^[0-9]{6}$/,
-                  message: "Invalid OTP format",
-                },
-                minLength: {
-                  value: 6,
-                  message: "OTP must be 6 digits",
-                },
-                validate: (value) => value.trim() !== "" || "OTP cannot be empty or spaces only",
-              })}
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
-                }`}
-            />
+            <OTPInput
+  value={otp}
+  onChange={(value) => setValue('otp', value)}
+  numInputs={6}
+  renderSeparator={<span className="mx-1"></span>}
+  renderInput={(props) => (
+    <input
+      {...props}
+      className={`w-10 h-12 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none ${
+        theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
+      }`}
+      autoComplete="one-time-code"
+      inputMode="numeric"
+    />
+  )}
+  containerStyle="flex justify-center gap-2"
+/>
             {errors.otp && (
               <p className="text-red-500 text-sm -mt-3">{errors.otp.message}</p>
             )}
