@@ -115,11 +115,9 @@ function TodoLogin() {
   useEffect(() => {
     if (otpSent) {
       console.log("OTP sent, attempting to setup auto-detection");
-      setTimeout(() => {
         attemptOtpAutofill();
-      }, 1000);
     }
-  }, [otpSent]);
+  });
 
   // Get full phone with country code
   const getFullPhone = () => {
