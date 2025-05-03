@@ -147,21 +147,21 @@ function TodoLogin() {
     if ('OTPCredential' in window) {
       try {
         console.log("Starting OTP detection...");
+        // Listen the SMS and get the OTP 
         const abortController = new AbortController()
         const timeout = setTimeout(() => abortController.abort(), 60000)
 
         const content = await navigator.credentials.get({
           otp: {
-            transport: ['sms'],
-            signal: abortController.signal
-          }
+            transport: ['sms']
+          },
+          signal: abortController.signal
         })
         clearTimeout(timeout)
 
         if (content && content.code) {
           console.log("OTP detected:", content.code);
-          setOtp(content.code); // Directly update the OTP state
-          document.getElementById('otp-input').value = content.code; // Update input field value
+          setValue('otp', content.code)
         }
       } catch (error) {
         if (error.name !== 'AbortError') {
@@ -177,9 +177,10 @@ function TodoLogin() {
   useEffect(() => {
     if (otpSent) {
       console.log("OTP sent, attempting autofill");
-      attemptOtpAutofill();
+        attemptOtpAutofill();
     }
   }, [otpSent]); 
+
 
   // OTP verify
   const verifyOtp = async (e) => {
