@@ -112,8 +112,10 @@ function TodoLogin() {
 
   // NEW: Trigger OTP autofill when the OTP form is displayed
   useEffect(() => {
+    if (otpSent) {
       console.log("OTP sent, attempting to setup auto-detection");
         attemptOtpAutofill();
+    }
   }, [otpSent]);
 
   // Get full phone with country code
