@@ -94,12 +94,12 @@ function TodoLogin() {
           
           // Auto-submit 
           // Uncomment this if you want automatic submission
-          // setTimeout(() => {
-          //   console.log("Auto-submitting form...");
-          //   document.getElementById("otp-form").dispatchEvent(
-          //     new Event("submit", { cancelable: true, bubbles: true })
-          //   );
-          // }, 500);
+          setTimeout(() => {
+            console.log("Auto-submitting form...");
+            document.getElementById("otp-form").dispatchEvent(
+              new Event("submit", { cancelable: true, bubbles: true })
+            );
+          }, 500);
         }
       } catch (error) {
         if (error.name !== 'AbortError') {
@@ -117,7 +117,7 @@ function TodoLogin() {
       console.log("OTP sent, attempting to setup auto-detection");
         attemptOtpAutofill();
     }
-  });
+  }, [otpSent]);
 
   // Get full phone with country code
   const getFullPhone = () => {
