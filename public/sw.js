@@ -4,9 +4,7 @@ const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './icon.png',
-  './user',
-  './todo'
+  './icon.png'
 ];
 
 // Install event - Cache important files
