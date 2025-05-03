@@ -146,6 +146,7 @@ function TodoLogin() {
   const attemptOtpAutofill = async () => {
     if ('OTPCredential' in window) {
       try {
+        console.log("Starting OTP detection...");
         // Listen the SMS and get the OTP 
         const abortController = new AbortController()
         const timeout = setTimeout(() => abortController.abort(), 60000)
@@ -167,16 +168,19 @@ function TodoLogin() {
         }
       }
     } else {
-      console.warn('OTPCredential API not supported in this browser.')
+      console.warn('OTP Credential API not supported in this browser.')
     }
   }
 
   // Runs the OTP autofill function when OTP is sent
   useEffect(() => {
     if (otpSent) {
-      attemptOtpAutofill()
+      console.log("OTP sent, attempting autofill");
+      setTimeout(() => {
+        attemptOtpAutofill();
+      }, 1000);
     }
-  }, [otpSent])
+  }, [otpSent]); 
 
 
   // OTP verify
@@ -474,7 +478,7 @@ function TodoLogin() {
                 },
                 validate: (value) => value.trim() !== "" || "OTP cannot be empty or spaces only",
               })}
-              autoComplete="onet-time-code"
+              autoComplete="one-time-code"
               inputMode="numeric"
               className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600 outline-none ${theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
                 }`}
