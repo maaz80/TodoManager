@@ -177,9 +177,8 @@ function TodoLogin() {
   useEffect(() => {
     if (otpSent) {
       console.log("OTP sent, attempting autofill");
-      setTimeout(() => {
+      toast.info("OTP sent, attempting autofill...");
         attemptOtpAutofill();
-      }, 1000);
     }
   }, [otpSent]); 
 
@@ -462,7 +461,7 @@ function TodoLogin() {
             </button>
           </form>
         ) : (
-          <form className="space-y-4" onSubmit={verifyOtp}>
+          <form className="space-y-4" onSubmit={verifyOtp} id="otp-form">
             {/* OTP input */}
             <input
               type="text"
