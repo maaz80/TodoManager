@@ -20,7 +20,7 @@ function TodoLogin() {
     handleSubmit,
     reset,
     watch,
-    setValue,  // Important for OTP autofill
+    setValue,
     formState: { errors, isValid },
   } = useForm({
     mode: "onChange",
@@ -90,16 +90,15 @@ function TodoLogin() {
           
           // Set the OTP code in the form
           setValue("otp", credential.code);
-          toast.success("OTP automatically detected!", credential.code);
+          toast.success("OTP automatically detected!");
           
           // Auto-submit 
-          // Uncomment this if you want automatic submission
-          setTimeout(() => {
-            console.log("Auto-submitting form...");
-            document.getElementById("otp-form").dispatchEvent(
-              new Event("submit", { cancelable: true, bubbles: true })
-            );
-          }, 500);
+          // setTimeout(() => {
+          //   console.log("Auto-submitting form...");
+          //   document.getElementById("otp-form").dispatchEvent(
+          //     new Event("submit", { cancelable: true, bubbles: true })
+          //   );
+          // }, 500);
         }
       } catch (error) {
         if (error.name !== 'AbortError') {
@@ -113,10 +112,8 @@ function TodoLogin() {
 
   // NEW: Trigger OTP autofill when the OTP form is displayed
   useEffect(() => {
-    if (otpSent) {
       console.log("OTP sent, attempting to setup auto-detection");
         attemptOtpAutofill();
-    }
   }, [otpSent]);
 
   // Get full phone with country code
