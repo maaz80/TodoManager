@@ -44,6 +44,14 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - Serve from cache first, then network
 self.addEventListener('fetch', (event) => {
+  // Ignore requests with unsupported schemes
+  console.log('Intercepted request:', event.request.url);
+
+  if (!event.request.url.startsWith('http')) {
+    console.warn('Unsupported request scheme:', event.request.url);
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -51,26 +59,25 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        
+
         // Not in cache - return the result from the live server
-        // Clone the request as it's a one-time use stream
         const fetchRequest = event.request.clone();
-        
+
         return fetch(fetchRequest)
           .then((response) => {
             // Check if we received a valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-            
+
             // Clone the response as it's a one-time use stream
             const responseToCache = response.clone();
-            
+
             caches.open(CACHE_NAME)
               .then((cache) => {
                 cache.put(event.request, responseToCache);
               });
-              
+
             return response;
           })
           .catch(() => {
@@ -78,11 +85,11 @@ self.addEventListener('fetch', (event) => {
             if (event.request.url.indexOf('/user') !== -1) {
               return caches.match('./user');
             }
-            
+
             if (event.request.url.indexOf('/todo') !== -1) {
               return caches.match('./todo');
             }
-            
+
             // Return a basic offline page as fallback for other requests
             return new Response("You are currently offline. Please check your connection.", {
               status: 503,
