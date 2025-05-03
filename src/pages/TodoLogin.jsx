@@ -90,7 +90,7 @@ function TodoLogin() {
           
           // Set the OTP code in the form
           setValue("otp", credential.code);
-          toast.success("OTP automatically detected!");
+          toast.success("OTP automatically detected!", credential.code);
           
           // Auto-submit 
           // Uncomment this if you want automatic submission
@@ -102,7 +102,6 @@ function TodoLogin() {
           // }, 500);
         }
       } catch (error) {
-        // Don't show error for user abort
         if (error.name !== 'AbortError') {
           console.error("Error during OTP detection:", error);
         }
@@ -118,7 +117,7 @@ function TodoLogin() {
       console.log("OTP sent, attempting to setup auto-detection");
       setTimeout(() => {
         attemptOtpAutofill();
-      }, 10000);
+      }, 1000);
     }
   }, [otpSent]);
 
