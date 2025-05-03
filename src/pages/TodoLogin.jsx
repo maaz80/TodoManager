@@ -10,7 +10,6 @@ function TodoLogin() {
   const [isLogin, setIsLogin] = useState(true);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState("+91"); // Default to India
-  const [isOtpProcessing, setIsOtpProcessing] = useState(false);
 
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
@@ -125,8 +124,6 @@ function TodoLogin() {
         console.log("Error checking user existence. Continuing with OTP flow.", checkError);
       }
 
-      setIsOtpProcessing(true);
-      
       // Send OTP
       const { error } = await supabase.auth.signInWithOtp({
         phone: fullPhone,
@@ -135,78 +132,54 @@ function TodoLogin() {
       if (error) {
         console.error("Error sending OTP: ", error);
         toast.error("Error sending OTP!");
-        setIsOtpProcessing(false);
       } else {
         toast.success("OTP sent successfully!");
         setOtpSent(true);
-        setIsOtpProcessing(false);
-        // Clear the OTP field in case there was a previous attempt
-        setValue('otp', '');
       }
     } catch (error) {
       console.error("Error checking user: ", error);
       toast.error("Something went wrong!");
-      setIsOtpProcessing(false);
     }
   };
 
-  // Improved OTP auto detection 
+  // Otp auto detection 
   const attemptOtpAutofill = async () => {
     if ('OTPCredential' in window) {
       try {
         console.log("Starting OTP detection...");
-        
-        // Create abort controller with longer timeout (90 seconds)
-        const abortController = new AbortController();
-        const timeout = setTimeout(() => {
-          console.log("OTP detection timed out");
-          abortController.abort();
-        }, 90000);
+        // Listen the SMS and get the OTP 
+        const abortController = new AbortController()
+        const timeout = setTimeout(() => abortController.abort(), 60000)
 
-        // Listen for SMS and get the OTP
-        navigator.credentials.get({
-          otp: { transport: ['sms'] },
+        const content = await navigator.credentials.get({
+          otp: {
+            transport: ['sms']
+          },
           signal: abortController.signal
-        }).then(content => {
-          clearTimeout(timeout);
-          
-          if (content && content.code) {
-            console.log("OTP detected:", content.code);
-            setValue('otp', content.code);
-            
-            // Optional: Auto-submit the form if OTP is detected
-            setTimeout(() => {
-              if (document.getElementById('otp-form')) {
-                document.getElementById('verify-otp-button').click();
-              }
-            }, 500);
-          } else {
-            console.log("OTP credential received but no code found");
-          }
-        }).catch(error => {
-          clearTimeout(timeout);
-          if (error.name !== 'AbortError') {
-            console.error('OTP Autofill Error:', error);
-          } else {
-            console.log("OTP detection aborted after timeout");
-          }
-        });
+        })
+        clearTimeout(timeout)
+
+        if (content && content.code) {
+          console.log("OTP detected:", content.code);
+          setValue('otp', content.code)
+        }
       } catch (error) {
-        console.error('Error setting up OTP detection:', error);
+        if (error.name !== 'AbortError') {
+          console.error('OTP Autofill Error: ', error)
+        }
       }
     } else {
-      console.warn('OTP Credential API not supported in this browser.');
+      console.warn('OTP Credential API not supported in this browser.')
     }
-  };
+  }
 
   // Runs the OTP autofill function when OTP is sent
   useEffect(() => {
     if (otpSent) {
       console.log("OTP sent, attempting autofill");
-      // Wait a moment before starting autofill to ensure browser is ready
       setTimeout(() => {
         attemptOtpAutofill();
-      }, 500);
+      }, 1000);
     }
   }, [otpSent]); 
 
@@ -220,7 +193,6 @@ function TodoLogin() {
     }
 
     const fullPhone = getFullPhone();
-    setIsOtpProcessing(true);
 
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -232,7 +204,6 @@ function TodoLogin() {
       if (error) {
         console.error("Error verifying OTP: ", error);
         toast.error("Invalid OTP! Please try again.");
-        setIsOtpProcessing(false);
       } else {
         console.log("Authentication successful:", data);
 
@@ -248,7 +219,6 @@ function TodoLogin() {
           if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found" which is expected
             console.error("Error checking existing user: ", fetchError);
             toast.error("Error creating account!");
-            setIsOtpProcessing(false);
             return;
           }
 
@@ -262,7 +232,6 @@ function TodoLogin() {
             if (updateError) {
               console.error("Error updating user: ", updateError);
               toast.error("Error updating account!");
-              setIsOtpProcessing(false);
               return;
             }
           } else {
@@ -278,7 +247,6 @@ function TodoLogin() {
             if (insertError) {
               console.error("Error creating user: ", insertError);
               toast.error("Error creating account! Please make sure you have set up the users table in Supabase.");
-              setIsOtpProcessing(false);
               return;
             }
           }
@@ -314,7 +282,6 @@ function TodoLogin() {
     } catch (error) {
       console.error("Authentication error: ", error);
       toast.error("Authentication failed!");
-      setIsOtpProcessing(false);
     }
   };
 
@@ -482,15 +449,15 @@ function TodoLogin() {
             {/* Submit button */}
             <button
               type="submit"
-              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${!isValid || isOtpProcessing
+              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${!isValid
                 ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                 : theme === "dark"
                   ? "bg-blue-700 text-white hover:bg-blue-600"
                   : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
                 }`}
-              disabled={!isValid || isOtpProcessing}
+              disabled={!isValid}
             >
-              {isOtpProcessing ? "Processing..." : "Send OTP"}
+              Send OTP
             </button>
           </form>
         ) : (
@@ -522,17 +489,16 @@ function TodoLogin() {
 
             {/* Submit and Reset buttons */}
             <button
-              id="verify-otp-button"
               type="submit"
-              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${!otp || isOtpProcessing
+              className={`w-full duration-300 font-semibold py-3 rounded-lg transition-all ${!otp
                 ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                 : theme === "dark"
                   ? "bg-blue-700 text-white hover:bg-blue-600"
                   : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
                 }`}
-              disabled={!otp || isOtpProcessing}
+              disabled={!otp}
             >
-              {isOtpProcessing ? "Verifying..." : (isLogin ? "Login" : "Sign Up")}
+              {isLogin ? "Login" : "Sign Up"}
             </button>
 
             <button
@@ -542,7 +508,6 @@ function TodoLogin() {
                 ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
-              disabled={isOtpProcessing}
             >
               Change Number
             </button>
@@ -556,7 +521,6 @@ function TodoLogin() {
             type="button"
             onClick={toggleAuthMode}
             className={`font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}
-            disabled={isOtpProcessing}
           >
             {isLogin ? "Sign Up" : "Login"}
           </button>
