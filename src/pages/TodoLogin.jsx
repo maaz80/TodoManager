@@ -147,6 +147,7 @@ function TodoLogin() {
 const attemptOtpAutofill = async (retries = 3, delay = 5000) => {
   if (!('OTPCredential' in window)) {
     console.warn('OTP Credential API not supported in this browser.');
+    toast.error("OTP Autofill not supported in this browser.");
     return;
   }
   
