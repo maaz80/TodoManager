@@ -188,7 +188,7 @@ function TodoLogin() {
       toast.info("Attempting OTP autofill...");
       setTimeout(() => {
         attemptOtpAutofill();
-      }, 4000);
+      }, 500);
     }
   }, [otpSent]);
 
