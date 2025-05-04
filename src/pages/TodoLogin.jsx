@@ -167,13 +167,16 @@ const attemptOtpAutofill = async (retries = 3, delay = 5000) => {
       
       if (content && content.code) {
         console.log("OTP detected:", content.code);
+        toast.success("OTP detected successfully!");
         setValue('otp', content.code);
         return true; // Success
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
+        alert('OTP Autofill Error:', error)
         console.error('OTP Autofill Error:', error);
       } else {
+        toast.error("OTP detection timed out!");
         console.log('OTP detection timed out for this attempt');
       }
     }
