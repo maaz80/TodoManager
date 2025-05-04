@@ -143,49 +143,61 @@ function TodoLogin() {
     }
   };
 
-  // Otp auto detection 
-  const attemptOtpAutofill = async () => {
-    if ('OTPCredential' in window) {
-      try {
-        console.log("Starting OTP detection...");
-        // Listen the SMS and get the OTP 
-        const abortController = new AbortController()
-        const timeout = setTimeout(() => abortController.abort(), 60000)
-
-        const content = await navigator.credentials.get({
-          otp: {
-            transport: ['sms']
-          },
-          signal: abortController.signal
-        })
-        clearTimeout(timeout)
-
-        // Message i am getting 
-        // Sent from your Twilio trial account - Your verification code for TaskMaster is: 144331 
-        // @xtodomanager.netlify.app #144331
-        if (content && content.code) {
-          console.log("OTP detected:", content.code);
-          setValue('otp', content.code)
-        }
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('OTP Autofill Error: ', error)
-        }
-      }
-    } else {
-      console.warn('OTP Credential API not supported in this browser.')
-    }
+// Otp auto detection with retries
+const attemptOtpAutofill = async (retries = 3, delay = 5000) => {
+  if (!('OTPCredential' in window)) {
+    console.warn('OTP Credential API not supported in this browser.');
+    return;
   }
-
-  // Runs the OTP autofill function when OTP is sent
-  useEffect(() => {
-    if (otpSent) {
-      console.log("OTP sent, attempting autofill");
-      setTimeout(() => {
-        attemptOtpAutofill();
-      }, 4000);
+  
+  let currentRetry = 0;
+  
+  const tryDetectOtp = async () => {
+    try {
+      console.log(`Starting OTP detection attempt ${currentRetry + 1}...`);
+      const abortController = new AbortController();
+      const timeout = setTimeout(() => abortController.abort(), 30000); // 30 second timeout per attempt
+      
+      const content = await navigator.credentials.get({
+        otp: { transport: ['sms'] },
+        signal: abortController.signal
+      });
+      
+      clearTimeout(timeout);
+      
+      if (content && content.code) {
+        console.log("OTP detected:", content.code);
+        setValue('otp', content.code);
+        return true; // Success
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('OTP Autofill Error:', error);
+      } else {
+        console.log('OTP detection timed out for this attempt');
+      }
     }
-  }, [otpSent]);
+    
+    currentRetry++;
+    if (currentRetry < retries) {
+      console.log(`Retrying OTP detection in ${delay/1000} seconds...`);
+      setTimeout(tryDetectOtp, delay);
+    } else {
+      console.log('Maximum OTP detection attempts reached');
+    }
+  };
+  
+  tryDetectOtp();
+};
+
+// And update your useEffect
+useEffect(() => {
+  if (otpSent) {
+    console.log("OTP sent, attempting autofill");
+    // Start immediately but use retries
+    attemptOtpAutofill(3, 10000); // 3 retries, 10 seconds apart
+  }
+}, [otpSent]);
 
   // OTP verify
   const verifyOtp = async (e) => {
