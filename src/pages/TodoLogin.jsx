@@ -475,10 +475,11 @@ function TodoLogin() {
               renderInput={(props) => (
                 <input
                   {...props}
-                  className={`w-24 h-12 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none ${theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
-                    }`}
+                  className={` text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none ${theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-white text-gray-700"
+                    }` }
                   autoComplete="one-time-code"
                   inputMode="numeric"
+                  style={{width:'30px', height:'50px'}}
                 />
               )}
               containerStyle="flex justify-center gap-2"
