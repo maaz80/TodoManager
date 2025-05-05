@@ -179,15 +179,12 @@ function TodoLogin() {
   }
 
   // Runs the OTP autofill function when OTP is sent
-  // useEffect(() => {
-  //   if (otpSent) {
-  //     console.log("OTP sent, attempting autofill");
-  //     toast.info("Attempting OTP autofill...");
-  //     setTimeout(() => {
-  //       attemptOtpAutofill();
-  //     }, 500);
-  //   }
-  // }, [otpSent]);
+  useEffect(() => {
+    if (otpSent) {
+      console.log("OTP sent, attempting autofill");
+        attemptOtpAutofill();
+    }
+  }, [otpSent]);
 
   // OTP verify
   const verifyOtp = async (e) => {
