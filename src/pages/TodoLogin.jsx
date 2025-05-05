@@ -494,6 +494,7 @@ function TodoLogin() {
               isInputNum
               shouldAutoFocus
               inputStyle={{ width: '2rem', height: '2rem', margin: '0 0.5rem' }}
+              renderInput={(props) => <input {...props} />}
               inputProps={{
                 inputMode: 'numeric',
                 autoComplete: 'one-time-code',
