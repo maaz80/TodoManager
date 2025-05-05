@@ -18,24 +18,24 @@ export default function swDev() {
               console.log("New version available.");
               
               // Create and show update notification
-              const updateNotification = document.createElement('div');
-              updateNotification.style.position = 'fixed';
-              updateNotification.style.bottom = '20px';
-              updateNotification.style.right = '20px';
-              updateNotification.style.backgroundColor = '#4CAF50';
-              updateNotification.style.color = 'white';
-              updateNotification.style.padding = '16px';
-              updateNotification.style.borderRadius = '4px';
-              updateNotification.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
-              updateNotification.style.zIndex = '9999';
-              updateNotification.innerHTML = 'New update available. <button id="refresh-app">Refresh</button>';
+              // const updateNotification = document.createElement('div');
+              // updateNotification.style.position = 'fixed';
+              // updateNotification.style.bottom = '20px';
+              // updateNotification.style.right = '20px';
+              // updateNotification.style.backgroundColor = '#4CAF50';
+              // updateNotification.style.color = 'white';
+              // updateNotification.style.padding = '16px';
+              // updateNotification.style.borderRadius = '4px';
+              // updateNotification.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+              // updateNotification.style.zIndex = '9999';
+              // updateNotification.innerHTML = 'New update available. <button id="refresh-app">Refresh</button>';
               
-              document.body.appendChild(updateNotification);
+              // document.body.appendChild(updateNotification);
               
-              // Add event listener to refresh button
-              document.getElementById('refresh-app').addEventListener('click', () => {
+              // // Add event listener to refresh button
+              // document.getElementById('refresh-app').addEventListener('click', () => {
                 window.location.reload();
-              });
+              // });
             } else {
               console.log("Content cached for offline use.");
             }
