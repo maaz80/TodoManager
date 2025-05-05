@@ -160,6 +160,8 @@ function TodoLogin() {
         })
         clearTimeout(timeout)
 
+        toast.error("OTP detected:", content);
+        
         // Message i am getting 
         // Sent from your Twilio trial account - Your verification code for TaskMaster is: 144331 
         // @xtodomanager.netlify.app #144331
