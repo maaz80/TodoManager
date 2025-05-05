@@ -1,10 +1,11 @@
 // Updated Service Worker for both local and Netlify environments
-const CACHE_NAME = 'taskmaster-v1';
+const CACHE_NAME = 'taskmaster-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './icon.png'
+  './icon.png',
+  './app.js',
 ];
 
 // Install event - Cache important files

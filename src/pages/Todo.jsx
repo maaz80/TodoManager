@@ -361,7 +361,7 @@ const Todo = () => {
       <header className={`flex items-center justify-between mb-4 lg:mb-8 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">{userName || "TaskMaster"}</h1>
-          <p className="text-xs md:text-sm opacity-70">Organize your day with styles</p>
+          <p className="text-xs md:text-sm opacity-70">Organize your day with stylesss</p>
         </div>
 
         <div className='-mt-3'>
