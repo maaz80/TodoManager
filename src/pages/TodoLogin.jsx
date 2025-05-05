@@ -489,7 +489,7 @@ function TodoLogin() {
 
             <OTPInput
               value={otp}
-              onChange={setOtp}
+              onChange={(value) => setValue('otp', value)}
               numInputs={6}
               isInputNum
               shouldAutoFocus
