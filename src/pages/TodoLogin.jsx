@@ -469,7 +469,7 @@ function TodoLogin() {
         ) : (
           <form className="space-y-4" onSubmit={verifyOtp} id="otp-form">
             {/* OTP input */}
-            <OTPInput
+            {/* <OTPInput
               value={otp}
               onChange={(value) => setValue('otp', value)}
               numInputs={6}
@@ -485,7 +485,21 @@ function TodoLogin() {
                 />
               )}
               containerStyle="flex justify-center gap-2"
+            /> */}
+
+            <OTPInput
+              value={otp}
+              onChange={setOtp}
+              numInputs={6}
+              isInputNum
+              shouldAutoFocus
+              inputStyle={{ width: '2rem', height: '2rem', margin: '0 0.5rem' }}
+              inputProps={{
+                inputMode: 'numeric',
+                autoComplete: 'one-time-code',
+              }}
             />
+
             {errors.otp && (
               <p className="text-red-500 text-sm -mt-3">{errors.otp.message}</p>
             )}
@@ -493,7 +507,7 @@ function TodoLogin() {
             {/* Submit and Reset buttons */}
             <button
               type="submit"
-              className={`w-full duration-300 font-semibold py-3  rounded-lg transition-all ${otp.length !== 6 
+              className={`w-full duration-300 font-semibold py-3  rounded-lg transition-all ${otp.length !== 6
                 ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                 : `cursor-pointer ${theme === "dark"
                   ? "bg-blue-700 text-white hover:bg-blue-600"
