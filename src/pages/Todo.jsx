@@ -280,9 +280,9 @@ const Todo = () => {
   useEffect(() => {
     const fetchFilteredTasksCount = async () => {
       if (!userId) return;
-  
+
       let query = supabase.from('todo').select('*', { count: 'exact', head: true }).eq('user_id', userId);
-  
+
       switch (activeTab) {
         case 'today':
           query = query.filter('due_date', 'eq', format(new Date(), 'yyyy-MM-dd'));
@@ -299,23 +299,23 @@ const Todo = () => {
         default:
           break;
       }
-  
+
       // Fetch the total count of filtered tasks
       const { count, error } = await query;
-  
+
       if (error) {
         console.error('Error fetching filtered tasks count:', error);
         return;
       }
-  
+
       setTotalPages(Math.ceil(count / tasksPerPage) || 1);
       setTotalCount(count || 0);
-  
+
       // console.log('Filtered Tasks Count:', count);
       // console.log('Tasks Per Page:', tasksPerPage);
       // console.log('Total Pages:', Math.ceil(count / tasksPerPage) || 1);
     };
-  
+
     fetchFilteredTasksCount();
   }, [activeTab, userId]);
 
@@ -346,14 +346,14 @@ const Todo = () => {
   }
 
   // Loading skeleton
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[600px]">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-gray-600">Loading your tasks...</p>
-      </div>
-    )
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center h-[600px]">
+  //       <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+  //       <p className="mt-4 text-gray-600">Loading your tasks...</p>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="max-w-4xl mx-auto p-2 lg:p-4">
@@ -399,7 +399,7 @@ const Todo = () => {
             <h2 className="text-xl font-bold ">Create New Task</h2>
             <button
               onClick={() => setShowForm(false)}
-              className='bg-gray-200 p-2 hover:bg-gray-300 rounded-full hover:shadow-md transition-all duration-300'
+              className='bg-gray-200 p-2 hover:bg-gray-300 cursor-pointer rounded-full hover:shadow-md transition-all duration-300'
             >
               <IoCloseOutline />
             </button>
@@ -462,8 +462,8 @@ const Todo = () => {
                 <input
                   type="date"
                   className={`w-full p-3 rounded-lg border cursor-pointer ${theme === "dark"
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-gray-50 border-gray-200"
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-gray-50 border-gray-200"
                     }`}
                   {...register("dueDate", { required: true })}
                   min={format(new Date(), "yyyy-MM-dd")}
@@ -513,7 +513,7 @@ const Todo = () => {
 
                     {/* Upload Text or Filename with Icon */}
                     <div className="flex items-center justify-center gap-2 relative z-10">
-                    <LuImagePlus className={`text-lg ${theme === "dark" ? "text-gray-300" : "text-gray-500"}`} />
+                      <LuImagePlus className={`text-lg ${theme === "dark" ? "text-gray-300" : "text-gray-500"}`} />
                       {selectedFileName ? (
                         <span className="font-medium truncate max-w-[120px] text-sm overflow-hidden text-ellipsis whitespace-nowrap">
                           {selectedFileName}
@@ -539,10 +539,10 @@ const Todo = () => {
                   type="submit"
                   disabled={!isValid}
                   className={`w-full md:w-auto px-6 py-3 text-sm md:text-base rounded-lg text-white font-medium transition-all ${!isValid
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : createTaskLoading
                       ? "bg-gray-400 cursor-not-allowed"
-                      : createTaskLoading
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
+                      : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg"
                     }`}
                 >
                   {createTaskLoading ? 'Creating...' : 'Create Task'}
@@ -575,7 +575,12 @@ const Todo = () => {
 
       {/* Task List */}
       <div className="space-y-4 md:space-y-8">
-        {userId ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-[600px]">
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-gray-600">Loading your tasks...</p>
+          </div>
+        ) : userId ? (
           Object.entries(groupedTasks).length === 0 ? (
             <div className={`text-center py-16 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
               <div className="text-6xl mb-4">✨</div>
@@ -588,7 +593,7 @@ const Todo = () => {
               {!showForm && (
                 <button
                   onClick={() => setShowForm(true)}
-                  className="mt-4 px-6 py-2 bg-blue-600  text-white rounded-lg hover:bg-blue-700 font-medium"
+                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                 >
                   Create Task
                 </button>
@@ -605,15 +610,15 @@ const Todo = () => {
                     <div
                       key={task.id}
                       className={`flex items-center gap-3 p-4 rounded-lg shadow-sm transition-all cursor-pointer
-                     ${task.is_done
+                 ${task.is_done
                           ? (theme === 'dark' ? 'opacity-60 bg-gray-800' : 'opacity-75 bg-gray-50')
                           : (theme === 'dark' ? 'bg-gray-800' : 'bg-white hover:shadow-md')}
-                     border-l-4 ${theme === 'dark' ? 'border-blue-700' : 'border-blue-500'}`}
+                 border-l-4 ${theme === 'dark' ? 'border-blue-700' : 'border-blue-500'}`}
                       onClick={() => openTaskModal(task)}
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center cursor-pointer
-                       ${task.is_done
+                   ${task.is_done
                             ? (theme === 'dark' ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white')
                             : (theme === 'dark' ? 'border-2 border-gray-600' : 'border-2 border-gray-300')}`}
                         onClick={(e) => {
@@ -636,15 +641,13 @@ const Todo = () => {
                           deleteTask(task.id);
                         }}
                         className={`p-2 rounded-full hover:bg-red-100 transition-colors
-                       ${theme === 'dark' ? 'text-red-400 hover:text-red-600' : 'text-red-500 hover:text-red-700'}`}
+                   ${theme === 'dark' ? 'text-red-400 hover:text-red-600' : 'text-red-500 hover:text-red-700'}`}
                       >
                         🗑️
                       </button>
                     </div>
                   ))}
                 </div>
-
-
               </div>
             ))
           )
