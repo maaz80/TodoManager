@@ -361,7 +361,7 @@ const Todo = () => {
       <header className={`flex items-center justify-between mb-4 lg:mb-8 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">{userName || "TaskMaster"}</h1>
-          <p className="text-xs md:text-sm opacity-70">Organize your day with stylesssss</p>
+          <p className="text-xs md:text-sm opacity-70">Organize your day with styles</p>
         </div>
 
         <div className='-mt-3'>
@@ -380,7 +380,7 @@ const Todo = () => {
               {showForm ? 'Cancel' : '+ New Task'}
             </button>
             {!userId && (
-              <span className="absolute -bottom-3.5 left-4 text-[10px] text-red-500">Login to add tasksww</span>
+              <span className="absolute -bottom-3.5 left-4 text-[10px] text-red-500">Login to add tasks</span>
             )}
           </div>
         </div>

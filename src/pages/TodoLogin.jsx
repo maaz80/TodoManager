@@ -468,7 +468,7 @@ function TodoLogin() {
         ) : (
           <form className="space-y-4" onSubmit={verifyOtp} id="otp-form">
             {/* OTP input */}
-            {/* <OTPInput
+            <OTPInput
               value={otp}
               onChange={(value) => setValue('otp', value)}
               numInputs={6}
@@ -484,9 +484,9 @@ function TodoLogin() {
                 />
               )}
               containerStyle="flex justify-center gap-2"
-            /> */}
+            />
 
-            <OTPInput
+            {/* <OTPInput
               value={otp}
               onChange={(value) => setValue('otp', value)}
               numInputs={6}
@@ -498,7 +498,7 @@ function TodoLogin() {
                 inputMode: 'numeric',
                 autoComplete: 'one-time-code',
               }}
-            />
+            /> */}
 
             {errors.otp && (
               <p className="text-red-500 text-sm -mt-3">{errors.otp.message}</p>
