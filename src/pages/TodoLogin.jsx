@@ -161,7 +161,7 @@ function TodoLogin() {
         clearTimeout(timeout)
 
         toast.error("OTP detected:", content);
-        
+
         // Message i am getting 
         // Sent from your Twilio trial account - Your verification code for TaskMaster is: 144331 
         // @xtodomanager.netlify.app #144331
@@ -184,7 +184,7 @@ function TodoLogin() {
   useEffect(() => {
     if (otpSent) {
       console.log("OTP sent, attempting autofill");
-        attemptOtpAutofill();
+      attemptOtpAutofill();
     }
   }, [otpSent]);
 
@@ -468,7 +468,7 @@ function TodoLogin() {
         ) : (
           <form className="space-y-4" onSubmit={verifyOtp} id="otp-form">
             {/* OTP input */}
-            <OTPInput
+            {/* <OTPInput
               value={otp}
               onChange={(value) => setValue('otp', value)}
               numInputs={6}
@@ -484,21 +484,32 @@ function TodoLogin() {
                 />
               )}
               containerStyle="flex justify-center gap-2"
-            />
-
-            {/* <OTPInput
-              value={otp}
-              onChange={(value) => setValue('otp', value)}
-              numInputs={6}
-              isInputNum
-              shouldAutoFocus
-              inputStyle={{ width: '2rem', height: '2rem', margin: '0 0.5rem' }}
-              renderInput={(props) => <input {...props} />}
-              inputProps={{
-                inputMode: 'numeric',
-                autoComplete: 'one-time-code',
-              }}
             /> */}
+
+<OTPInput
+  value={otp}
+  onChange={(value) => setValue('otp', value)}
+  numInputs={6}
+  isInputNum
+  containerStyle={{ display: 'flex', justifyContent: 'center', gap: '15px' }}
+  shouldAutoFocus
+  inputStyle={{
+    width: '40px',
+    height: '60px',
+    textAlign: 'center',
+    border: '1px solid #d1d5db', 
+    borderRadius: '0.5rem', 
+    outline: 'none',
+    backgroundColor: theme === 'dark' ? '#374151' : '#ffffff',
+    color: theme === 'dark' ? '#d1d5db' : '#374151', 
+    fontSize: '1rem',
+  }}
+  renderInput={(props) => <input {...props} />}
+  inputProps={{
+    inputMode: 'numeric',
+    autoComplete: 'one-time-code',
+  }}
+/>
 
             {errors.otp && (
               <p className="text-red-500 text-sm -mt-3">{errors.otp.message}</p>
