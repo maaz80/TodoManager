@@ -11,7 +11,7 @@ function TodoLogin() {
   const [isLogin, setIsLogin] = useState(true);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState("+91"); // Default to India
-
+  const [isLoading, setIsLoading] = useState(true); 
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
 
@@ -31,6 +31,36 @@ function TodoLogin() {
       otp: "",
     }
   });
+
+
+  // Check if user is already authenticated - add this useEffect
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        setIsLoading(true);
+        
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        // For more trust
+        const storedUserName = localStorage.getItem('userName');
+        const storedUserPhone = localStorage.getItem('userPhone');
+        
+        // If we have both a valid session and stored user data, redirect to home
+        if (sessionData?.session && storedUserName && storedUserPhone) {
+          console.log("User already logged in, redirecting to home");
+          navigate('/', { replace: true }); // Using replace: true removes the login page from history
+          return;
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setIsLoading(false);
+      }
+    };
+    
+    checkAuth();
+  }, [navigate]);
 
   // Watch values from form
   const phoneNumber = watch("phoneNumber");
@@ -282,7 +312,7 @@ function TodoLogin() {
         }
 
         toast.success(isLogin ? "Login successful!" : "Signup successful!");
-        navigate("/");
+        navigate("/",{ replace: true });
       }
     } catch (error) {
       console.error("Authentication error: ", error);
@@ -305,6 +335,17 @@ function TodoLogin() {
     setIsLogin(!isLogin);
     resetForm();
   };
+
+  if (isLoading) {
+    return (
+      <div className={`flex items-center justify-center h-[576px] md:h-[665px] p-2 md:p-4 ${theme === 'dark' ? 'bg-gradient-to-r from-gray-800 to-blue-600' : 'bg-gradient-to-r from-blue-100 to-purple-200'}`}>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <p className={`mt-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center justify-center h-[576px] md:h-[665px] p-2 md:p-4 ${theme === 'dark' ? 'bg-gradient-to-r from-gray-800 to-blue-600' : 'bg-gradient-to-r from-blue-100 to-purple-200'}`} >
@@ -486,30 +527,30 @@ function TodoLogin() {
               containerStyle="flex justify-center gap-2"
             /> */}
 
-<OTPInput
-  value={otp}
-  onChange={(value) => setValue('otp', value)}
-  numInputs={6}
-  isInputNum
-  containerStyle={{ display: 'flex', justifyContent: 'center', gap: '15px' }}
-  shouldAutoFocus
-  inputStyle={{
-    width: '40px',
-    height: '60px',
-    textAlign: 'center',
-    border: '1px solid #d1d5db', 
-    borderRadius: '0.5rem', 
-    outline: 'none',
-    backgroundColor: theme === 'dark' ? '#374151' : '#ffffff',
-    color: theme === 'dark' ? '#d1d5db' : '#374151', 
-    fontSize: '1rem',
-  }}
-  renderInput={(props) => <input {...props} />}
-  inputProps={{
-    inputMode: 'numeric',
-    autoComplete: 'one-time-code',
-  }}
-/>
+            <OTPInput
+              value={otp}
+              onChange={(value) => setValue('otp', value)}
+              numInputs={6}
+              isInputNum
+              containerStyle={{ display: 'flex', justifyContent: 'center', gap: '15px' }}
+              shouldAutoFocus
+              inputStyle={{
+                width: '40px',
+                height: '60px',
+                textAlign: 'center',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.5rem',
+                outline: 'none',
+                backgroundColor: theme === 'dark' ? '#374151' : '#ffffff',
+                color: theme === 'dark' ? '#d1d5db' : '#374151',
+                fontSize: '1rem',
+              }}
+              renderInput={(props) => <input {...props} />}
+              inputProps={{
+                inputMode: 'numeric',
+                autoComplete: 'one-time-code',
+              }}
+            />
 
             {errors.otp && (
               <p className="text-red-500 text-sm -mt-3">{errors.otp.message}</p>
