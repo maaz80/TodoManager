@@ -190,14 +190,24 @@ function TodoLogin() {
         })
         clearTimeout(timeout)
 
-        toast.error("OTP detected:", content);
-
+        
         // Message i am getting 
         // Sent from your Twilio trial account - Your verification code for TaskMaster is: 144331 
         // @xtodomanager.netlify.app #144331
         if (content && content.code) {
           console.log("OTP detected:", content.code);
           setValue('otp', content.code)
+          
+          setTimeout(() => {
+            const submitButton = document.querySelector('#otp-form button[type="submit"]');
+            if (submitButton) {
+              console.log("Focusing submit button");
+              submitButton.focus();
+            } else {
+              console.warn("Submit button not found");
+            }
+          }, 100);
+          toast.success("OTP Filled Automatically");
         }
       } catch (error) {
         if (error.name !== 'AbortError') {
@@ -532,6 +542,7 @@ function TodoLogin() {
               onChange={(value) => setValue('otp', value)}
               numInputs={6}
               isInputNum
+              inputType="tel"
               containerStyle={{ display: 'flex', justifyContent: 'center', gap: '15px' }}
               shouldAutoFocus
               inputStyle={{

@@ -8,7 +8,7 @@ import InstallPrompt from './components/InstallPrompt'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-// Create theme context and login modal context
+// Create theme context 
 export const ThemeContext = createContext({
   theme: 'light',
   toggleTheme: () => { }
@@ -45,10 +45,8 @@ const App = () => {
           <Route path="/login" element={<TodoLogin />} />
         </Routes>
         
-        {/* Add the InstallPrompt component here */}
         <InstallPrompt />
         
-        {/* Global Toast Container */}
         <ToastContainer position="bottom-right" theme={theme === 'dark' ? 'dark' : 'light'} />
       </div>
     </ThemeContext.Provider>
