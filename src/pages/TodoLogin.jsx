@@ -457,7 +457,7 @@ function TodoLogin() {
               </div>
 
               <input
-                type="tel"
+                type="number"
                 placeholder="Phone Number"
                 {...register("phoneNumber", {
                   required: "Phone number is required",
@@ -542,7 +542,7 @@ function TodoLogin() {
               onChange={(value) => setValue('otp', value)}
               numInputs={6}
               isInputNum
-              inputType="tel"
+              inputType="number"
               containerStyle={{ display: 'flex', justifyContent: 'center', gap: '15px' }}
               shouldAutoFocus
               inputStyle={{
