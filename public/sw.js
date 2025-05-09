@@ -1,5 +1,5 @@
 // Updated Service Worker for both local and Netlify environments
-const CACHE_NAME = 'taskmaster-v5';
+const CACHE_NAME = 'taskmaster-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -52,6 +52,17 @@ self.addEventListener('fetch', (event) => {
     console.warn('Unsupported request scheme:', event.request.url);
     return;
   }
+
+// Listening notification when app is closed
+self.addEventListener('push', function (event) {
+  const data = event.data.json();
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: './icons/icon-128x128.png',
+    })
+  );
+});
 
   event.respondWith(
     caches.match(event.request)

@@ -226,8 +226,10 @@ const Todo = () => {
           setTasks((prevTasks) => {
             switch (eventType) {
               case 'INSERT':
+                showNotification(payload);
                 return [...prevTasks, newTask]; // Add the new task
               case 'UPDATE':
+                showNotification(payload);  
                 return prevTasks.map((task) =>
                   task.id === newTask.id ? newTask : task
                 ); // Update the task
@@ -246,6 +248,51 @@ const Todo = () => {
       supabase.removeChannel(channel);
     };
   }, [userId]);
+
+  const showNotification = (payload) => {
+    if (Notification.permission === 'granted') {
+      const { eventType, new: newTask, old: oldTask } = payload;
+  
+      let title = '';
+      let body = '';
+  
+      switch (eventType) {
+        case 'INSERT':
+          title = 'New Task Added!';
+          body = `Task: "${newTask.title}" is due on ${new Date(newTask.due_date).toLocaleDateString()}.`;
+          break;
+        case 'UPDATE':
+          title = 'Task Updated!';
+          body = `Task: "${newTask.title}" has been updated.`;
+          break;
+        case 'DELETE':
+          title = 'Task Deleted!';
+          body = `Task: "${oldTask.title}" has been removed.`;
+          break;
+        default:
+          title = 'Task Notification';
+          body = 'A task has been updated.';
+      }
+  
+      // Show the notification
+      new Notification(title, {
+        body,
+        icon: '/icons/icon-192x192.png', // Path to your app's icon
+        badge: '/icons/icon-72x72.png', // Path to a smaller badge icon
+      });
+    }
+  };
+  
+  // Request permission on app start
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      if (Notification.permission !== 'granted') {
+        await Notification.requestPermission();
+      }
+    };
+  
+    requestNotificationPermission();
+  }, []);
 
   // Fetch task acc to current page 
   useEffect(() => {
