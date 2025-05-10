@@ -1,5 +1,5 @@
 // Updated Service Worker for both local and Netlify environments
-const CACHE_NAME = 'taskmaster-v6';
+const CACHE_NAME = 'taskmaster-v7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -54,15 +54,73 @@ self.addEventListener('fetch', (event) => {
   }
 
 // Listening notification when app is closed
-self.addEventListener('push', function (event) {
-  const data = event.data.json();
+// self.addEventListener('push', function (event) {
+//   const data = event.data.json();
+//   event.waitUntil(
+//     self.registration.showNotification(data.title, {
+//       body: data.body,
+//       icon: './icons/icon-128x128.png',
+//     })
+//   );
+// });
+
+// Push notification event handler
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    const data = event.data.json();
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: data.icon || '/icons/icon-192x192.png',
+        badge: data.badge || '/icons/icon-72x72.png',
+        data: data.data
+      })
+    );
+  }
+});
+
+// Notification click event handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  // This looks to see if the current is already open and focuses if it is
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: './icons/icon-128x128.png',
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Open a new window if none are open
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
     })
   );
 });
+
+// Variables for real-time updates when app is open
+let userId = null;
+
+// Message handling from the frontend
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'INIT_USER') {
+    userId = event.data.userId;
+    console.log('Service worker initialized for user:', userId);
+  }
+});
+
+// Function to notify open clients about DB changes
+async function notifyClients(payload) {
+  const clients = await self.clients.matchAll({ type: 'window' });
+  clients.forEach(client => {
+    client.postMessage({
+      type: 'DB_UPDATED',
+      payload
+    });
+  });
+}
 
   event.respondWith(
     caches.match(event.request)

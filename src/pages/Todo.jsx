@@ -26,6 +26,8 @@ const Todo = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 10;
 
+  // Backend API URL
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
   const openTaskModal = (task) => {
     setTaskModal({ isOpen: true, task });
   };
@@ -41,6 +43,134 @@ const Todo = () => {
     mode: 'onChange'
   })
 
+   // Register service worker on mount
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+  
+  // Function to register service worker
+  const registerServiceWorker = async () => {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        console.log('Service Worker registered with scope:', registration.scope);
+        
+        // Request notification permission
+        await requestNotificationPermission();
+      } catch (error) {
+        console.error('Service Worker registration failed:', error);
+      }
+    }
+  };
+
+  // Function to request notification permission and subscribe to push
+  const requestNotificationPermission = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      
+      if (permission === 'granted') {
+        // Only subscribe to push if we have a userId
+        if (userId) {
+          await subscribeToPushNotifications();
+        }
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+    }
+  };
+  
+  // Function to subscribe to push notifications
+  const subscribeToPushNotifications = async () => {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.warn('Push notifications not supported in this browser');
+        return;
+      }
+      
+      // Get service worker registration
+      const registration = await navigator.serviceWorker.ready;
+      
+      // Get the server's public VAPID key
+      const response = await fetch(`${API_URL}/vapid-public-key`);
+      const { publicKey } = await response.json();
+      
+      // Convert the VAPID key to a Uint8Array
+      const convertedKey = urlBase64ToUint8Array(publicKey);
+      
+      // Subscribe to push notifications
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedKey
+      });
+      
+      // Send the subscription to our backend
+      await fetch(`${API_URL}/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subscription,
+          userId
+        }),
+      });
+      
+      console.log('Successfully subscribed to push notifications');
+      
+      // Initialize service worker with user info
+      navigator.serviceWorker.controller.postMessage({
+        type: 'INIT_USER',
+        userId
+      });
+      
+      // Listen for messages from service worker
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+      
+    } catch (error) {
+      console.error('Error subscribing to push notifications:', error);
+    }
+  };
+  
+  // Function to convert base64 string to Uint8Array for Web Push
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+  
+  // Handle messages from service worker
+  const handleServiceWorkerMessage = (event) => {
+    if (event.data && event.data.type === 'DB_UPDATED') {
+      const { eventType, new: newTask, old: oldTask } = event.data.payload;
+      
+      // Update the local state based on the DB changes
+      setTasks((prevTasks) => {
+        switch (eventType) {
+          case 'INSERT':
+            return [...prevTasks, newTask]; // Add the new task
+          case 'UPDATE':
+            return prevTasks.map((task) =>
+              task.id === newTask.id ? newTask : task
+            ); // Update the task
+          case 'DELETE':
+            return prevTasks.filter((task) => task.id !== oldTask.id); // Remove the deleted task
+          default:
+            return prevTasks;
+        }
+      });
+    }
+  };
+
+  
   // Get current logged-in user and fetch name
   useEffect(() => {
     const getUser = async () => {
@@ -277,8 +407,8 @@ const Todo = () => {
       // Show the notification
       new Notification(title, {
         body,
-        icon: '/icons/icon-192x192.png', // Path to your app's icon
-        badge: '/icons/icon-72x72.png', // Path to a smaller badge icon
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-72x72.png', 
       });
     }
   };
