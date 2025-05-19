@@ -137,7 +137,7 @@ function TodoLogin() {
             .from('users')
             .select('phone')
             .eq('phone', fullPhone)
-            .single();
+            .maybeSingle();
 
           if (!error && data) {
             toast.info("Number already registered! Please login instead.");
@@ -152,7 +152,7 @@ function TodoLogin() {
             .from('users')
             .select('phone')
             .eq('phone', fullPhone)
-            .single();
+            .maybeSingle();
 
           if (error || !data) {
             toast.info("Number not registered! Please sign up instead.");
@@ -264,7 +264,7 @@ function TodoLogin() {
             .from('users')
             .select('*')
             .eq('user_id', data.user.id)
-            .single();
+            .maybeSingle();
 
           if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found" which is expected
             console.error("Error checking existing user: ", fetchError);
@@ -313,7 +313,7 @@ function TodoLogin() {
             .from('users')
             .select('name')
             .eq('phone', fullPhone)
-            .single();
+            .maybeSingle();
 
           if (userFetchError) {
             console.error("Error fetching user data: ", userFetchError);
