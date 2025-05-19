@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { ThemeContext } from "../App";
 import { useForm } from "react-hook-form";
 import OTPInput from "react-otp-input";
+import _ from 'lodash';
 
 function TodoLogin() {
   const [otpSent, setOtpSent] = useState(false);
@@ -14,7 +15,7 @@ function TodoLogin() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
-  const searchParams = useSearchParams()
+  const [searchParams] = useSearchParams()
   const [referrer, setReferrer] = useState(null)
   // React Hook Form
   const {
@@ -39,7 +40,7 @@ function TodoLogin() {
       setReferrer(ref)
       console.log("Referrer:", ref);
     }
-  }, [])
+  }, [searchParams])
 
   // Check if user is already authenticated - add this useEffect
   useEffect(() => {
