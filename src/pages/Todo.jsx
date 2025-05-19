@@ -413,17 +413,7 @@ const Todo = () => {
           <p className="text-xs md:text-sm opacity-70">Organize your day with stylesss</p>
         </div>
 
-        <button
-          onClick={() => {
-            const link = `https://xtodomanager.netlify.app/login?ref=${userId}`
-            navigator.clipboard.writeText(link)
-            toast.success("Link copied to clipboard!")
-          }
-          }
-          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-        >
-          Share Referral Link
-        </button>
+        
         <div className='-mt-3'>
           <div className="relative">
             <button

@@ -1,5 +1,5 @@
 // Updated Service Worker for both local and Netlify environments
-const CACHE_NAME = 'taskmaster-v7';
+const CACHE_NAME = 'taskmaster-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
