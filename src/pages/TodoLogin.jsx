@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { supabase } from "../supabase-client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { ThemeContext } from "../App";
 import { useForm } from "react-hook-form";
@@ -11,10 +11,11 @@ function TodoLogin() {
   const [isLogin, setIsLogin] = useState(true);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState("+91"); // Default to India
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
-
+  const searchParams = useSearchParams()
+  const [referrer, setReferrer] = useState(null)
   // React Hook Form
   const {
     register,
@@ -32,33 +33,40 @@ function TodoLogin() {
     }
   });
 
+  useEffect(() => {
+    const ref = searchParams.get("ref")
+    if (ref) {
+      setReferrer(ref)
+      console.log("Referrer:", ref);
+    }
+  }, [])
 
   // Check if user is already authenticated - add this useEffect
   useEffect(() => {
     const checkAuth = async () => {
       try {
         setIsLoading(true);
-        
+
         const { data: sessionData } = await supabase.auth.getSession();
-        
+
         // For more trust
         const storedUserName = localStorage.getItem('userName');
         const storedUserPhone = localStorage.getItem('userPhone');
-        
+
         // If we have both a valid session and stored user data, redirect to home
         if (sessionData?.session && storedUserName && storedUserPhone) {
           console.log("User already logged in, redirecting to home");
           navigate('/', { replace: true }); // Using replace: true removes the login page from history
           return;
         }
-        
+
         setIsLoading(false);
       } catch (error) {
         console.error("Auth check error:", error);
         setIsLoading(false);
       }
     };
-    
+
     checkAuth();
   }, [navigate]);
 
@@ -190,14 +198,10 @@ function TodoLogin() {
         })
         clearTimeout(timeout)
 
-        
-        // Message i am getting 
-        // Sent from your Twilio trial account - Your verification code for TaskMaster is: 144331 
-        // @xtodomanager.netlify.app #144331
         if (content && content.code) {
           console.log("OTP detected:", content.code);
           setValue('otp', content.code)
-          
+
           setTimeout(() => {
             const submitButton = document.querySelector('#otp-form button[type="submit"]');
             if (submitButton) {
@@ -286,7 +290,8 @@ function TodoLogin() {
               .insert([{
                 phone: fullPhone,
                 name: name,
-                user_id: data.user.id
+                user_id: data.user.id,
+                referred_by: referrer,
               }]);
 
             if (insertError) {
@@ -322,7 +327,7 @@ function TodoLogin() {
         }
 
         toast.success(isLogin ? "Login successful!" : "Signup successful!");
-        navigate("/",{ replace: true });
+        navigate("/", { replace: true });
       }
     } catch (error) {
       console.error("Authentication error: ", error);
@@ -360,6 +365,8 @@ function TodoLogin() {
   return (
     <div className={`flex items-center justify-center h-[576px] md:h-[665px] p-2 md:p-4 ${theme === 'dark' ? 'bg-gradient-to-r from-gray-800 to-blue-600' : 'bg-gradient-to-r from-blue-100 to-purple-200'}`} >
       <ToastContainer />
+      <h2>Signup Page</h2>
+      {referrer && <p>Referred by: {referrer}</p>}
       <div className={`w-full max-w-md rounded-2xl shadow-xl px-3 py-4 md:p-8 space-y-3 md:space-y-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'} text-center mt-2`}>
           {isLogin ? "Login to TaskMaster" : "SignUp in TaskMaster"}

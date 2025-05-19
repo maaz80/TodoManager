@@ -211,52 +211,6 @@ const Todo = () => {
     }
   };
 
-  useEffect(() => {
-    const registerPush = async () => {
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
-        const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: import.meta.env.VITE_PUBLIC_VAPID_KEY,
-        });
-
-// Get the user ID from Supabase
-        const user = await supabase.auth.getUser();
-        const userId = user.data.user.id;
-
-        // Save to Supabase
-        await supabase.from('push_subscriptions').upsert({
-          user_id: userId,
-          endpoint: sub.endpoint,
-          p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')))),
-          auth: btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')))),
-        });
-      }
-    };
-
-    registerPush();
-  }, []);
-
-  useEffect(() => {
-  if ('serviceWorker' in navigator && 'PushManager' in window) {
-    navigator.serviceWorker.ready.then(registration => {
-      registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: import.meta.env.VITE_PUBLIC_VAPID_KEY 
-      }).then(subscription => {
-        // Send subscription to backend
-        fetch('http://localhost:4000/api/subscribe', {
-          method: 'POST',
-          body: JSON.stringify(subscription),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-      });
-    });
-  }
-}, []);
-
 
   // Set up a real-time listener for the 'todo' table
   useEffect(() => {
@@ -459,6 +413,17 @@ const Todo = () => {
           <p className="text-xs md:text-sm opacity-70">Organize your day with stylesss</p>
         </div>
 
+        <button
+          onClick={() => {
+            const link = `https://xtodomanager.netlify.app/login?ref=${userId}`
+            navigator.clipboard.writeText(link)
+            toast.success("Link copied to clipboard!")
+          }
+          }
+          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+        >
+          Share Referral Link
+        </button>
         <div className='-mt-3'>
           <div className="relative">
             <button
