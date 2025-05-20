@@ -211,6 +211,53 @@ const Todo = () => {
     }
   };
 
+  // Notification when app is closed 
+//   useEffect(() => {
+//     const registerPush = async () => {
+//       if ('serviceWorker' in navigator && 'PushManager' in window) {
+//         const reg = await navigator.serviceWorker.ready;
+//         const sub = await reg.pushManager.subscribe({
+//           userVisibleOnly: true,
+//           applicationServerKey: import.meta.env.VITE_PUBLIC_VAPID_KEY,
+//         });
+
+// // Get the user ID from Supabase
+//         const user = await supabase.auth.getUser();
+//         const userId = user.data.user.id;
+
+//         // Save to Supabase
+//         await supabase.from('push_subscriptions').upsert({
+//           user_id: userId,
+//           endpoint: sub.endpoint,
+//           p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')))),
+//           auth: btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')))),
+//         });
+//       }
+//     };
+
+//     registerPush();
+//   }, []);
+
+//   useEffect(() => {
+//   if ('serviceWorker' in navigator && 'PushManager' in window) {
+//     navigator.serviceWorker.ready.then(registration => {
+//       registration.pushManager.subscribe({
+//         userVisibleOnly: true,
+//         applicationServerKey: import.meta.env.VITE_PUBLIC_VAPID_KEY 
+//       }).then(subscription => {
+//         // Send subscription to backend
+//         fetch('http://localhost:4000/api/subscribe', {
+//           method: 'POST',
+//           body: JSON.stringify(subscription),
+//           headers: {
+//             'Content-Type': 'application/json',
+//           },
+//         });
+//       });
+//     });
+//   }
+// }, []);
+
 
   // Set up a real-time listener for the 'todo' table
   useEffect(() => {
